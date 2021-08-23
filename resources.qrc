@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/plugins/report_wizard" >
+        <file>icon.png</file>
+    </qresource>
+</RCC>

@@ -1,0 +1,12 @@
+*.pyc
+Makefile
+*.log
+help/
+.idea/
+__pycache__/
+sample/
+.DS_Store
+tmpl/rendered_document.odt
+tmpl/rendered_document.md
+tmpl/rendered_document_files
+test/*
