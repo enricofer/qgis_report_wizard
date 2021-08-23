@@ -21,6 +21,7 @@
  *                                                                         *
  ***************************************************************************/
 """
+from typing import OrderedDict
 from qgis.PyQt.QtCore import QSize, QSettings, QTranslator, QCoreApplication, QFileInfo, Qt, QByteArray, QBuffer, QIODevice
 from qgis.PyQt.QtGui import QIcon, QImage, QPainter, QRegion, QBitmap, QPixmap
 from qgis.PyQt.QtWidgets import QAction, QFileDialog
@@ -244,20 +245,44 @@ class reportWizard:
                     "layout": layout,
                     "name": layout.name(),
                     "image": "image:layout:%s" % layout.name(),
-                    #"atlas": layout.atlas().coverageLayer().id()  if layout.atlas().enabled() else None
-                    "atlas": None
+                    "atlas": layout.atlas().coverageLayer().id()  if layout.atlas().enabled() else None
+                    #"atlas": None
                 }
-                if layout.atlas().enabled():
-                    atlas_feats = []
-                    has_feats = layout.atlas().first()
-                    while has_feats:
-                        current_fid = layout.atlas().currentFeatureNumber()
-                        atlas_feats.append("image:feature_layout:%s:%d" % (layout.name(),current_fid))
-                        has_feats = layout.atlas().next()
-                    layout_def["atlas"] = atlas_feats
+                #if layout.atlas().enabled():
+                #    atlas_feats = []
+
+                #    has_feats = layout.atlas().next()
+                #    while has_feats:
+                #        current_fid = layout.atlas().currentFeatureNumber()
+                #        atlas_feats.append("image:feature_layout:%s:%d" % (layout.name(),current_fid))
+                #        has_feats = layout.atlas().next()
+                #    layout_def["atlas"] = atlas_feats
+                #else:
+                #    print("NO ATLAS", layout.name(), layout.atlas().enabled())
                 layouts.append (layout_def)
 
+            #atlas_refs = []
+            #for layout in layouts:
+            #    for layerid in QgsProject.instance().mapLayers():
+            #        if layerid == layout["atlas"]:
+            #            atlas_def = {
+            #                "name": layout["name"]
+            #            }
+            #            atlas_feats=[]
+                        
+            #            for feat in QgsProject.instance().mapLayer(layerid).getFeatures():
+            #                res = layout["layout"].atlas().seekTo(feat)
+            #                if res:
+            #                    atlas_feats.append({
+            #                        "image": "image:feature_layout:%s:%d" % (layout["name"],feat.id()),
+            #                        #"page_name": To be calculated by layout.atlas().pageNameExpression()
+            #                    })
+            #            atlas_def["pages"] = atlas_feats
+            #            atlas_refs.append(atlas_def)
 
+
+            feat_dicts = []
+            print ("ACTIVE LAYER", self.iface.activeLayer())
             if self.iface.activeLayer():
                 layer = self.iface.activeLayer()
                 #atlas_refs = []
@@ -267,22 +292,25 @@ class reportWizard:
                 feats = layer.selectedFeatures()
                 if not feats:
                     feats = layer.getFeatures()
-                    feat_dicts = []
-                    for feat in feats: #Iterator?
-                        f_dict = {
-                            "geom": feat.geometry(),
-                            "canvas": "image:feature_canvas:%s:%d" % (layer.id(),feat.id())
-                        }
-                        #for atlas in atlas_refs:
-                        #    feat_dicts[atlas["name"]] = "image:feature_layout:%s:%d" % (atlas,feat.id())
-                            
-                        for field in layer.fields().toList():
-                            f_dict[field.name()] = feat[field.name()]
-                        feat_dicts.append(f_dict)
+                print ("FIDS", feats)
+                for feat in feats: #Iterator?
+                    f_dict = {
+                        "id": feat.id(),
+                        "obj": feat,
+                        "geom": feat.geometry(),
+                        "canvas": "image:feature_canvas:%s:%d" % (layer.id(),feat.id())
+                    }
+                    #for atlas in atlas_refs:
+                    #    feat_dicts[atlas["name"]] = "image:feature_layout:%s:%d" % (atlas,feat.id())
+                    attributes = {}
+                    for field in layer.fields().toList():
+                        attributes[field.name()] = feat[field.name()]
+                    f_dict["attributes"] = attributes
+                    feat_dicts.append(f_dict)
             else:
                 feat_dicts = []
 
-            print ("LAYOUTS", layouts)
+            print ("FEATS", feat_dicts)
 
             if mdNameInfo.suffix() == 'md':
                 env = Environment(
@@ -301,8 +329,9 @@ class reportWizard:
                 
                 @engine.media_loader
                 def qgis_images_loader(value,dpi=100,theme=None,around_border=0.1,mimetype="image/png",filter=None,**kwargs):
-                    image_metadata = value.split(":")
-                    print ("image metadata",image_metadata, kwargs)
+                    print ("image value",value, kwargs)
+                    image_metadata = value["canvas"].split(":")
+                    print ("image metadata",image_metadata)
                     if not 'svg:width' in kwargs['frame_attrs']:
                         print ("NO svg:width!")
                         return
@@ -315,7 +344,7 @@ class reportWizard:
                     elif units == "mm":
                         factor = 25.4
                     
-                    xsize  = int(float(kwargs['frame_attrs']['svg:width'][:-2])/factor*dpi)
+                    xsize = int(float(kwargs['frame_attrs']['svg:width'][:-2])/factor*dpi)
                     ysize = int(float(kwargs['frame_attrs']['svg:height'][:-2])/factor*dpi)
 
                     img_temppath = tempfile.NamedTemporaryFile(suffix=".png",delete=False).name
@@ -324,7 +353,7 @@ class reportWizard:
                         if image_metadata[1] == 'feature_canvas':
                             layer = QgsProject.instance().mapLayer(image_metadata[2])
                             feature = layer.getFeature(int(image_metadata[3]))
-                            img = self.canvas_image(feature.geometry(),xsize=xsize,ysize=ysize,theme=layer)
+                            img = self.canvas_image(feature.geometry(),xsize=xsize,ysize=ysize)
                             img.save(img_temppath)
                             
                         elif image_metadata[1] == 'layer':
@@ -360,7 +389,7 @@ class reportWizard:
                         print (img_temppath)
                         return (open(img_temppath, 'rb'), mimetype)
                         
-                result = engine.render(mdNameInfo.absoluteFilePath(), layouts=layouts, layers=layers, project=project_vars, globals=global_vars, layer = feat_dicts )
+                result = engine.render(mdNameInfo.absoluteFilePath(), layouts=layouts, layers=layers, project=project_vars, globals=global_vars, features = feat_dicts )
 
                 with open(os.path.join(dd, 'rendered_document.odt'), 'wb') as output:
                     output.write(result)
