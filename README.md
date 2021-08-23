@@ -2,6 +2,4 @@
 
 ## dependencies
 
-- [secretary](https://github.com/christopher-ramirez/secretary)
-
-`pip install secretary`
+- [secretary](https://github.com/christopher-ramirez/secretary) `pip install secretary`
