@@ -51,7 +51,7 @@ from .resources import *
 import os.path
 
 from jinja2 import Environment, PackageLoader, select_autoescape, FileSystemLoader
-from jinja2 import evalcontextfilter, Markup, escape
+from jinja2 import evalcontextfilter, Markup, escape, meta
 
 from secretary import Renderer
 
@@ -232,8 +232,9 @@ class reportWizard:
             for layername,layer in QgsProject.instance().mapLayers().items():
                 layers.append ({
                     "layer":layer,
+                    "type": 'layer',
                     "name": layer.name(),
-                    "image": "image:layer:%s" % layer.id(),
+                    "image": "layer:%s" % layer.id(),
                     "id": layer.id(),
                     "source": layer.publicSource(),
                     "extent": layer.extent().asWktCoordinates(),
@@ -243,8 +244,9 @@ class reportWizard:
             for layout in QgsProject.instance().layoutManager().printLayouts():
                 layout_def = {
                     "layout": layout,
+                    "type": 'layout',
                     "name": layout.name(),
-                    "image": "image:layout:%s" % layout.name(),
+                    "image": "layout:%s" % layout.name(),
                     "atlas": layout.atlas().coverageLayer().id()  if layout.atlas().enabled() else None
                     #"atlas": None
                 }
@@ -296,9 +298,10 @@ class reportWizard:
                 for feat in feats: #Iterator?
                     f_dict = {
                         "id": feat.id(),
+                        "type": 'feature',
                         "obj": feat,
                         "geom": feat.geometry(),
-                        "canvas": "image:feature_canvas:%s:%d" % (layer.id(),feat.id())
+                        "image": "feature:%s" % (layer.id())
                     }
                     #for atlas in atlas_refs:
                     #    feat_dicts[atlas["name"]] = "image:feature_layout:%s:%d" % (atlas,feat.id())
@@ -328,10 +331,13 @@ class reportWizard:
                 engine = Renderer()
                 
                 @engine.media_loader
-                def qgis_images_loader(value,dpi=100,theme=None,around_border=0.1,mimetype="image/png",filter=None,**kwargs):
+                def qgis_images_loader(value,dpi=100,atlas=None,theme=None,around_border=0.1,mimetype="image/png",filter=None,**kwargs):
                     print ("image value",value, kwargs)
-                    image_metadata = value["canvas"].split(":")
-                    print ("image metadata",image_metadata)
+                    if atlas:
+                        image_metadata = ["atlas",atlas]
+                    else:
+                        image_metadata = value["image"].split(":")
+                    print ("image metadata",image_metadata, kwargs.keys())
                     if not 'svg:width' in kwargs['frame_attrs']:
                         print ("NO svg:width!")
                         return
@@ -349,51 +355,54 @@ class reportWizard:
 
                     img_temppath = tempfile.NamedTemporaryFile(suffix=".png",delete=False).name
                     
-                    if image_metadata[0] == 'image':
-                        if image_metadata[1] == 'feature_canvas':
-                            layer = QgsProject.instance().mapLayer(image_metadata[2])
-                            feature = layer.getFeature(int(image_metadata[3]))
-                            img = self.canvas_image(feature.geometry(),xsize=xsize,ysize=ysize)
-                            img.save(img_temppath)
-                            
-                        elif image_metadata[1] == 'layer':
-                            layer = QgsProject.instance().mapLayer(image_metadata[2])
-                            img = self.canvas_image(layer.extent(),xsize=xsize,ysize=ysize,theme=layer)
-                            img.save(img_temppath)
-                            
-                        elif image_metadata[1] in ('layout', 'feature_layout'):
-                            #https://anitagraser.com/pyqgis-101-introduction-to-qgis-python-programming-for-non-programmers/pyqgis-101-exporting-layouts/
-                            manager = QgsProject.instance().layoutManager()
-                            layout = manager.layoutByName(image_metadata[2])
-                            if image_metadata[1] == 'feature_layout':
-                                layout.atlas().seekTo(int(image_metadata[3]))
-                                print ("SEEKto", image_metadata[3])
-                                layout.atlas().refreshCurrentFeature()
-                            exporter = QgsLayoutExporter(layout)
-                            print ("UNITS",layout.pageCollection().page(0).pageSize() )
-                            aspect_ratio = layout.pageCollection().page(0).pageSize().width()/layout.pageCollection().page(0).pageSize().height()
-                            settings = exporter.ImageExportSettings()
-                            print (settings.imageSize)
-                            if xsize>ysize:
-                                ysize = xsize*aspect_ratio
-                            else:
-                                xsize = ysize*aspect_ratio
-                            settings.imageSize = QSize(xsize ,ysize)
-                            settings.dpi = dpi
-                            settings.cropToContents = False
-                            #settings.pages = [0]
-                            print ( xsize, ysize, settings.imageSize, settings.dpi)
-                            res = exporter.exportToImage(img_temppath, settings)
-                            print ("LAYOUT EXPORT RESULT",res, exporter.errorFile())
-                            
-                        print (img_temppath)
-                        return (open(img_temppath, 'rb'), mimetype)
+                    if image_metadata[0] == 'feature':
+                        layer = QgsProject.instance().mapLayer(image_metadata[1])
+                        feature = layer.getFeature(value['id'])
+                        img = self.canvas_image(feature.geometry(),xsize=xsize,ysize=ysize)
+                        img.save(img_temppath)
+                        
+                    elif image_metadata[0] == 'layer':
+                        layer = QgsProject.instance().mapLayer(image_metadata[1])
+                        img = self.canvas_image(layer.extent(),xsize=xsize,ysize=ysize,theme=layer)
+                        img.save(img_temppath)
+                        
+                    elif image_metadata[0] in ('layout', 'atlas'):
+                        #https://anitagraser.com/pyqgis-101-introduction-to-qgis-python-programming-for-non-programmers/pyqgis-101-exporting-layouts/
+                        manager = QgsProject.instance().layoutManager()
+                        layout = manager.layoutByName(image_metadata[1])
+                        if image_metadata[0] == 'atlas': # is atlas
+                            layout.atlas().seekTo(value['id'])
+                            print ("SEEKto", value['id'])
+                            layout.atlas().refreshCurrentFeature()
+                        exporter = QgsLayoutExporter(layout)
+                        print ("UNITS",layout.pageCollection().page(0).pageSize() )
+                        aspect_ratio = layout.pageCollection().page(0).pageSize().width()/layout.pageCollection().page(0).pageSize().height()
+                        settings = exporter.ImageExportSettings()
+                        print (settings.imageSize)
+                        if xsize>ysize:
+                            ysize = xsize*aspect_ratio
+                        else:
+                            xsize = ysize*aspect_ratio
+                        settings.imageSize = QSize(xsize ,ysize)
+                        settings.dpi = dpi
+                        settings.cropToContents = False
+                        #settings.pages = [0]
+                        print ( xsize, ysize, settings.imageSize, settings.dpi)
+                        res = exporter.exportToImage(img_temppath, settings)
+                        print ("LAYOUT EXPORT RESULT",res, exporter.errorFile())
+                    else:
+                        raise Exception("Can't export image. Item must be feature, layer or layout.")
+                        
+                    print (img_temppath)
+                    return (open(img_temppath, 'rb'), mimetype)
                         
                 result = engine.render(mdNameInfo.absoluteFilePath(), layouts=layouts, layers=layers, project=project_vars, globals=global_vars, features = feat_dicts )
 
                 with open(os.path.join(dd, 'rendered_document.odt'), 'wb') as output:
                     output.write(result)
                     output.flush()
+
+                print ( "VARIABLES", engine.render_vars  )
 
     def canvas_image(self,value,xsize=150,ysize=150,theme=None,around_border=0.1):
         if isinstance(value, QgsRectangle):
