@@ -31,6 +31,8 @@ from PyQt5.Qsci import QsciScintilla, QsciLexerHTML, QsciLexerMarkdown
 from qgis.gui import QgsMapCanvas
 from qgis.core import (
     QgsMapRendererJob,
+    QgsWkbTypes,
+    QgsMapLayerType,
     QgsApplication,
     QgsMapRendererParallelJob,
     QgsExpressionContextUtils,
@@ -204,6 +206,11 @@ class reportWizard:
                 action)
             self.iface.removeToolBarIcon(action)
 
+    def isVector(self,layer):
+        return layer["obj"].type() == QgsMapLayerType.VectorLayer
+
+    def isRaster(self,layer):
+        return layer["obj"].type() == QgsMapLayerType.RasterLayer
 
     def run(self):
         """Run method that performs all the real work"""
@@ -229,16 +236,21 @@ class reportWizard:
                     self.iface.mapCanvas().extent().xMaximum(),
                     self.iface.mapCanvas().extent().yMaximum()
                 ],
-                "vars":{}
+                "vars":{},
+                "v":[]
             }
             for k in list(QgsExpressionContextUtils.projectScope(QgsProject.instance()).variableNames())+list(QgsExpressionContextUtils.globalScope().variableNames()):
-                print(k)
-                if k in ('layers'):
+                if k in ('layers','user_account_name'):
                     continue
-                globals["vars"][k] = QgsExpressionContextUtils.projectScope(QgsProject.instance()).variable(k) 
-                print(globals["vars"][k])
-            #global_vars = {k: QgsExpressionContextUtils.globalScope().variable(k) for k in QgsExpressionContextUtils.globalScope().variableNames()}
-
+                var_value = QgsExpressionContextUtils.projectScope(QgsProject.instance()).variable(k)
+                globals["vars"][str(k)] =  var_value if isinstance(var_value, str) else str(var_value).replace("\\","/")
+                globals["v"].append({
+                    "key": str(k),
+                    "value": str(var_value)
+                })
+                #print(globals["vars"][k])
+                #global_vars = {k: QgsExpressionContextUtils.globalScope().variable(k) for k in QgsExpressionContextUtils.globalScope().variableNames()}
+            print(globals["vars"])
             globals["themes"] = list(QgsProject.instance().mapThemeCollection().mapThemes())
 
             globals["bookmarks"] = []
@@ -258,12 +270,42 @@ class reportWizard:
             
             layers = []
             for layername,layer in QgsProject.instance().mapLayers().items():
+
+                if  layer.type() == QgsMapLayerType.VectorLayer:
+                    type = "vector"
+                elif layer.type() == QgsMapLayerType.RasterLayer:
+                    type = "raster"
+                elif layer.type() == QgsMapLayerType.PluginLayer:
+                    type = "plugin"
+                elif layer.type() == QgsMapLayerType.MeshLayer:
+                    type = "mesh"
+                else:
+                    type = "unknown"
+
+                fields = []
+                geometryType = ""
+                if type == 'vector':
+                    if  layer.geometryType() ==  QgsWkbTypes.PointGeometry:
+                        geometryType = "point"
+                    elif layer.geometryType() == QgsWkbTypes.LineGeometry:
+                        geometryType = "linestring"
+                    elif layer.geometryType() == QgsWkbTypes.PolygonGeometry:
+                        geometryType = "polygon"
+                    elif layer.geometryType() == QgsWkbTypes.UnknownGeometry:
+                        geometryType = "unknown"
+                    elif layer.geometryType() == QgsWkbTypes.NullGeometry:
+                        geometryType = "nullgeometry"
+                    for field in layer.fields().toList():
+                        fields.append(field.name())
+
                 layers.append ({
-                    "layer":layer,
+                    "obj":layer,
                     "type": 'layer',
+                    "layerType": type,
+                    "geometryType": geometryType,
                     "name": layer.name(),
                     "image": "layer:%s" % layer.id(),
-                    "id": layer.id(),
+                    "id": layername,
                     "source": layer.publicSource(),
                     "extent": layer.extent(),
                     "box": [
@@ -271,13 +313,14 @@ class reportWizard:
                         layer.extent().yMinimum(),
                         layer.extent().xMaximum(),
                         layer.extent().yMaximum()
-                    ]
+                    ],
+                    "fields": fields
                 })
                 
             layouts = []
             for layout in QgsProject.instance().layoutManager().printLayouts():
                 layout_def = {
-                    "layout": layout,
+                    "obj": layout,
                     "type": 'layout',
                     "name": layout.name(),
                     "image": "layout:%s" % layout.name(),
@@ -287,12 +330,11 @@ class reportWizard:
 
             feat_dicts = []
             print ("ACTIVE LAYER", self.iface.activeLayer())
-            if self.iface.activeLayer():
+            if self.iface.activeLayer() and self.iface.activeLayer().type() == QgsMapLayerType.VectorLayer :
                 layer = self.iface.activeLayer()
                 feats = layer.selectedFeatures()
                 if not feats:
                     feats = layer.getFeatures()
-                print ("FIDS", feats)
                 for feat in feats: #Iterator?
                     f_dict = {
                         "id": feat.id(),
@@ -309,8 +351,6 @@ class reportWizard:
             else:
                 feat_dicts = []
 
-            print ("FEATS", feat_dicts)
-
             if mdNameInfo.suffix() == 'md':
                 env = Environment(
                     loader=FileSystemLoader('/'),
@@ -325,9 +365,11 @@ class reportWizard:
                 
             elif mdNameInfo.suffix() == 'odt':
                 engine = Renderer()
+                engine.environment.filters['isVector'] = self.isVector
+                engine.environment.filters['isRaster'] = self.isRaster
                 
                 @engine.media_loader
-                def qgis_images_loader(value,dpi=100,atlas=None,theme=None,scale_denominator=None,around_border=0.1,mimetype="image/png",filter=None,**kwargs):
+                def qgis_images_loader(value,dpi=100,box=None,atlas=None,theme=None,scale_denominator=None,around_border=0.1,mimetype="image/png",filter=None,**kwargs):
                     
                     def scaledFrame(center):
                         semiScaledXSize = meterxsize*scale_denominator/2
@@ -366,7 +408,12 @@ class reportWizard:
 
                     img_temppath = tempfile.NamedTemporaryFile(suffix=".png",delete=False).name
                     
-                    if image_metadata[0] == 'feature':
+                    if image_metadata[0] == 'canvas':
+                        print ("CANVAAS", theme)
+                        img = self.canvas_image(box=box,width=width,height=height,around_border=around_border,theme=theme)
+                        img.save(img_temppath)
+
+                    elif image_metadata[0] == 'feature':
                         layer = QgsProject.instance().mapLayer(image_metadata[1])
                         feature = layer.getFeature(value['id'])
                         print ("GEOM BOX", feature.geometry().boundingBox().width() )
@@ -374,7 +421,7 @@ class reportWizard:
                             box = scaledFrame(feature.geometry().boundingBox().center())
                             around_border = 0
                         else:
-                            box = feature.geometry()
+                            box = box or feature.geometry()
                         img = self.canvas_image(box ,width=width,height=height,around_border=around_border)
                         img.save(img_temppath)
                         
@@ -383,8 +430,8 @@ class reportWizard:
                         if scale_denominator:
                             box = scaledFrame(layer.extent().center(),xsize,ysize,scale_denominator)
                         else:
-                            box = layer.extent()
-                        img = self.canvas_image(layer.extent(),width=width,height=height,theme=layer)
+                            box = box or layer.extent()
+                        img = self.canvas_image(box,width=width,height=height,theme=layer)
                         img.save(img_temppath)
                         
                     elif image_metadata[0] in ('layout', 'atlas'):
@@ -425,22 +472,22 @@ class reportWizard:
 
                 print ( "VARIABLES", engine.render_vars  )
 
-    def canvas_image(self,value,width=150,height=150,theme=None,around_border=0.1):
-        if isinstance(value, QgsRectangle):
-            bb = value
-        elif isinstance(value, QgsGeometry):
-            bb = value.boundingBox()
+    def canvas_image(self,box=None,width=150,height=150,theme=None,around_border=0.1):
+        if isinstance(box, QgsRectangle):
+            bb = box
+        elif isinstance(box, QgsGeometry):
+            bb = box.boundingBox()
         else:
             bb = self.iface.mapCanvas().extent()
         img = self.exporter.image_shot(bb,width,height,theme,around_border)
         return img
 
 
-    def canvas_base64_image(self,value,xsize=150,ysize=150,theme=None,around_border=0.1):
-        if isinstance(value, QgsRectangle):
-            bb = value
-        elif isinstance(value, QgsGeometry):
-            bb = value.boundingBox()
+    def canvas_base64_image(self,box=None,xsize=150,ysize=150,theme=None,around_border=0.1):
+        if isinstance(box, QgsRectangle):
+            bb = box
+        elif isinstance(box, QgsGeometry):
+            bb = box.boundingBox()
         else:
             bb = self.iface.mapCanvas().extent()
         base64_img = self.exporter.base64_shot(bb,xsize,ysize,theme,around_border)
