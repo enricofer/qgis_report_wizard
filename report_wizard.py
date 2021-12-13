@@ -33,6 +33,7 @@ from qgis.core import (
     QgsMapRendererJob,
     QgsWkbTypes,
     QgsMapLayerType,
+    QgsPointXY,
     QgsApplication,
     QgsMapRendererParallelJob,
     QgsExpressionContextUtils,
@@ -229,6 +230,8 @@ class reportWizard:
             #project_vars = {k: QgsExpressionContextUtils.projectScope(QgsProject.instance()).variable(k) for k in QgsExpressionContextUtils.projectScope(QgsProject.instance()).variableNames()}
             globals = {
                 "image": "canvas:"+self.iface.mapCanvas().theme(),
+                "project": QgsProject.instance(),
+                "mapCanvas": self.iface.mapCanvas(),
                 "extent": self.iface.mapCanvas().extent(),
                 "box": [
                     self.iface.mapCanvas().extent().xMinimum(),
@@ -236,20 +239,14 @@ class reportWizard:
                     self.iface.mapCanvas().extent().xMaximum(),
                     self.iface.mapCanvas().extent().yMaximum()
                 ],
-                "vars":{},
-                "v":[]
+                "vars":{}
             }
+
             for k in list(QgsExpressionContextUtils.projectScope(QgsProject.instance()).variableNames())+list(QgsExpressionContextUtils.globalScope().variableNames()):
                 if k in ('layers','user_account_name'):
                     continue
                 var_value = QgsExpressionContextUtils.projectScope(QgsProject.instance()).variable(k)
                 globals["vars"][str(k)] =  var_value if isinstance(var_value, str) else str(var_value).replace("\\","/")
-                globals["v"].append({
-                    "key": str(k),
-                    "value": str(var_value)
-                })
-                #print(globals["vars"][k])
-                #global_vars = {k: QgsExpressionContextUtils.globalScope().variable(k) for k in QgsExpressionContextUtils.globalScope().variableNames()}
             print(globals["vars"])
             globals["themes"] = list(QgsProject.instance().mapThemeCollection().mapThemes())
 
@@ -369,14 +366,47 @@ class reportWizard:
                 engine.environment.filters['isRaster'] = self.isRaster
                 
                 @engine.media_loader
-                def qgis_images_loader(value,dpi=100,box=None,atlas=None,theme=None,scale_denominator=None,around_border=0.1,mimetype="image/png",filter=None,**kwargs):
-                    
-                    def scaledFrame(center):
-                        semiScaledXSize = meterxsize*scale_denominator/2
-                        semiScaledYSize = meterysize*scale_denominator/2
-                        print ("SCALED BOX", width, meterxsize, semiScaledYSize*2, scale_denominator )
-                        return QgsRectangle(center.x()-semiScaledXSize, center.y()-semiScaledYSize, center.x()+semiScaledXSize, center.y()+semiScaledYSize)
-                    
+                def qgis_images_loader(value,dpi=200,box=None,center=None,atlas=None,theme=None,scale_denominator=None,around_border=0.1,mimetype="image/png",filter=None,**kwargs):
+
+                    print ("KWARGS",kwargs)
+                    if center and not scale_denominator:
+                        raise ("Can't specify center without scale_denominator parameter")   
+
+                    def getFrame(reference_frame):
+                        centerxy = center
+                        bb = box
+                        print ("getFrame", bb, centerxy, scale_denominator, theme )
+                        if scale_denominator:
+                            if not centerxy:
+                                if bb:
+                                    centerxy = bb.center()
+                                else:
+                                    centerxy = reference_frame.center()
+                            else:
+                                if isinstance(centerxy,str):
+                                    coords = centerxy.split(",")
+                                    centerxy = QgsPointXY(coords[0],coords[1])
+                                elif not isinstance(centerxy,QgsPointXY):
+                                    raise ("Malformed center parameter")
+                            
+                            semiScaledXSize = meterxsize*scale_denominator/2
+                            semiScaledYSize = meterysize*scale_denominator/2
+                            return QgsRectangle(centerxy.x()-semiScaledXSize, centerxy.y()-semiScaledYSize, centerxy.x()+semiScaledXSize, centerxy.y()+semiScaledYSize)
+                        else:
+                            if not bb:
+                                bb = reference_frame
+
+                            if around_border:
+                                if xsize >= ysize:
+                                    dim = bb.xMaximum() - bb.xMinimum()
+                                else:
+                                    dim = bb.yMaximum() - bb.yMinimum()
+                                dim = dim*around_border
+                                bb.grow(dim)
+                            return bb
+
+
+
                     if atlas:
                         image_metadata = ["atlas",atlas]
                     else:
@@ -398,40 +428,35 @@ class reportWizard:
                         reverse_factor = 25.4
                     
                     xsize = float(kwargs['frame_attrs']['svg:width'][:-2])
-                    ysize = float(kwargs['frame_attrs']['svg:width'][:-2])
+                    ysize = float(kwargs['frame_attrs']['svg:height'][:-2])
 
                     meterxsize = xsize*m_conversion_factor
                     meterysize = ysize*m_conversion_factor
 
                     width = int(xsize/reverse_factor*dpi)
                     height = int(ysize/reverse_factor*dpi)
+                    aspect_ratio = width/height
 
                     img_temppath = tempfile.NamedTemporaryFile(suffix=".png",delete=False).name
                     
                     if image_metadata[0] == 'canvas':
                         print ("CANVAAS", theme)
-                        img = self.canvas_image(box=box,width=width,height=height,around_border=around_border,theme=theme)
+                        view_box = getFrame(self.iface.mapCanvas().extent())
+                        img = self.canvas_image(box=view_box,width=width,height=height,theme=theme)
                         img.save(img_temppath)
 
                     elif image_metadata[0] == 'feature':
                         layer = QgsProject.instance().mapLayer(image_metadata[1])
                         feature = layer.getFeature(value['id'])
                         print ("GEOM BOX", feature.geometry().boundingBox().width() )
-                        if scale_denominator:
-                            box = scaledFrame(feature.geometry().boundingBox().center())
-                            around_border = 0
-                        else:
-                            box = box or feature.geometry()
-                        img = self.canvas_image(box ,width=width,height=height,around_border=around_border)
+                        view_box = getFrame(feature.geometry().boundingBox())
+                        img = self.canvas_image(box=view_box,width=width,height=height)
                         img.save(img_temppath)
                         
                     elif image_metadata[0] == 'layer':
                         layer = QgsProject.instance().mapLayer(image_metadata[1])
-                        if scale_denominator:
-                            box = scaledFrame(layer.extent().center(),xsize,ysize,scale_denominator)
-                        else:
-                            box = box or layer.extent()
-                        img = self.canvas_image(box,width=width,height=height,theme=layer)
+                        view_box = getFrame(layer.extent())
+                        img = self.canvas_image(box=view_box,width=width,height=height,theme=layer)
                         img.save(img_temppath)
                         
                     elif image_metadata[0] in ('layout', 'atlas'):
@@ -472,25 +497,25 @@ class reportWizard:
 
                 print ( "VARIABLES", engine.render_vars  )
 
-    def canvas_image(self,box=None,width=150,height=150,theme=None,around_border=0.1):
+    def canvas_image(self,box=None,width=150,height=150,theme=None):
         if isinstance(box, QgsRectangle):
             bb = box
         elif isinstance(box, QgsGeometry):
             bb = box.boundingBox()
         else:
             bb = self.iface.mapCanvas().extent()
-        img = self.exporter.image_shot(bb,width,height,theme,around_border)
+        img = self.exporter.image_shot(bb,width,height,theme)
         return img
 
 
-    def canvas_base64_image(self,box=None,xsize=150,ysize=150,theme=None,around_border=0.1):
+    def canvas_base64_image(self,box=None,xsize=150,ysize=150,theme=None):
         if isinstance(box, QgsRectangle):
             bb = box
         elif isinstance(box, QgsGeometry):
             bb = box.boundingBox()
         else:
             bb = self.iface.mapCanvas().extent()
-        base64_img = self.exporter.base64_shot(bb,xsize,ysize,theme,around_border)
+        base64_img = self.exporter.base64_shot(bb,xsize,ysize,theme)
         #print (str(base64_img))
         return base64_img
 
@@ -506,7 +531,7 @@ class canvas_image_exporter:
         self.canvas.update()
         self.settings = self.main_canvas.mapSettings()
 
-    def image_shot(self, extent, xsize, ysize,theme,around_border):
+    def image_shot(self, extent, xsize, ysize,theme):
         #self.canvas.resize(xsize,ysize) #QSize(xsize,ysize)
         if theme:
             if isinstance(theme, str):
@@ -515,15 +540,11 @@ class canvas_image_exporter:
                 self.canvas.setLayers([theme])
             else:
                 self.canvas.setLayers(self.main_canvas.layers())
-        if xsize >= ysize:
-            dim = extent.xMaximum() - extent.xMinimum()
-        else:
-            dim = extent.yMaximum() - extent.yMinimum()
-        dim = dim*around_border
-        extent.grow(dim)
+        
         self.canvas.setExtent(extent)
         self.canvas.refresh()
         self.canvas.update()
+        print ("export settings2:", extent,"xsize:", extent.xMaximum() - extent.xMinimum(),xsize,"ysize:", extent.yMaximum() - extent.yMinimum(),ysize )
         mapSettings = self.canvas.mapSettings()
         mapSettings.setOutputSize( QSize(xsize,ysize ) )
         job = QgsMapRendererParallelJob(mapSettings)
