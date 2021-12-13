@@ -448,8 +448,17 @@ class reportWizard:
                     elif image_metadata[0] == 'feature':
                         layer = QgsProject.instance().mapLayer(image_metadata[1])
                         feature = layer.getFeature(value['id'])
+                        QgsExpressionContextUtils.setLayerVariable(layer,"atlas_featureid", feature.id())
+                        QgsExpressionContextUtils.setLayerVariable(layer,"atlas_feature", feature)
+                        if layer.geometryType() == QgsWkbTypes.PointGeometry:
+                            p = feature.geometry().boundingBox().center()
+                            halfwidth = self.iface.mapCanvas().extent().width()/8
+                            halfheight = halfwidth = self.iface.mapCanvas().extent().height()/4
+                            pointFeatbox = QgsRectangle(p.x()-halfwidth,p.y()-halfheight,p.x()+halfwidth,p.y()+halfheight)
+                            view_box = getFrame(pointFeatbox)
+                        else:
+                            view_box = getFrame(feature.geometry().boundingBox())
                         print ("GEOM BOX", feature.geometry().boundingBox().width() )
-                        view_box = getFrame(feature.geometry().boundingBox())
                         img = self.canvas_image(box=view_box,width=width,height=height)
                         img.save(img_temppath)
                         
