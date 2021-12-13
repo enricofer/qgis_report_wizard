@@ -448,6 +448,8 @@ class reportWizard:
                     elif image_metadata[0] == 'feature':
                         layer = QgsProject.instance().mapLayer(image_metadata[1])
                         feature = layer.getFeature(value['id'])
+                        QgsExpressionContextUtils.layerScope(layer).setVariable("atlas_featureid", value['id'])
+                        QgsExpressionContextUtils.layerScope(layer).setVariable("atlas_feature", feature)
                         print ("GEOM BOX", feature.geometry().boundingBox().width() )
                         view_box = getFrame(feature.geometry().boundingBox())
                         img = self.canvas_image(box=view_box,width=width,height=height)
