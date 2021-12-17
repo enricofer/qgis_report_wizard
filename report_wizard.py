@@ -59,6 +59,9 @@ from jinja2 import evalcontextfilter, Markup, escape, meta
 
 from secretary import Renderer
 
+from processing import execAlgorithmDialog, createAlgorithmDialog
+from .report_wizard_provider import ReportWizardProvider
+
 class reportWizard:
     """QGIS Plugin Implementation."""
 
@@ -72,7 +75,6 @@ class reportWizard:
         """
         # Save reference to the QGIS interface
         self.iface = iface
-        self.exporter = canvas_image_exporter(iface.mapCanvas())
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
         # initialize locale
@@ -184,10 +186,16 @@ class reportWizard:
         self.actions.append(action)
 
         return action
+    
+
+    def initProcessing(self):
+        """Init Processing provider for QGIS >= 3.8."""
+        self.provider = ReportWizardProvider(self.iface)
+        QgsApplication.processingRegistry().addProvider(self.provider)
 
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
-
+        self.initProcessing()
         icon_path = ':/plugins/report_wizard/icon.png'
         self.add_action(
             icon_path,
@@ -206,6 +214,17 @@ class reportWizard:
                 self.tr(u'&Report wizard'),
                 action)
             self.iface.removeToolBarIcon(action)
+        QgsApplication.processingRegistry().removeProvider(self.provider)
+
+    def run(self):        
+        params = {} 
+        dialog = createAlgorithmDialog('report_wizard:odt_report', params)
+        dialog.show()
+        dialog.exec_()
+        results = dialog.results()
+        dialog.setResults(results["OUTPUT_ODT"])
+        dialog.close()
+        print("results", results)
 
     def isVector(self,layer):
         return layer["obj"].type() == QgsMapLayerType.VectorLayer
@@ -213,7 +232,7 @@ class reportWizard:
     def isRaster(self,layer):
         return layer["obj"].type() == QgsMapLayerType.RasterLayer
 
-    def run(self):
+    def __run(self):
         """Run method that performs all the real work"""
 
         mdNameInfo = QFileInfo(QFileDialog.getOpenFileName(
@@ -327,6 +346,9 @@ class reportWizard:
 
             feat_dicts = []
             print ("ACTIVE LAYER", self.iface.activeLayer())
+            
+            self.exporter = canvas_image_exporter(self.iface.mapCanvas())
+
             if self.iface.activeLayer() and self.iface.activeLayer().type() == QgsMapLayerType.VectorLayer :
                 layer = self.iface.activeLayer()
                 feats = layer.selectedFeatures()
@@ -353,7 +375,6 @@ class reportWizard:
                     loader=FileSystemLoader('/'),
                     autoescape=select_autoescape(['html', 'xml']),
                 )
-                self.exporter = canvas_image_exporter(self.iface.mapCanvas())
                 env.filters["image"] = self.canvas_image
                 template = env.get_template(mdNameInfo.absoluteFilePath())
                 result = template.render(layers=layers, project=project_vars, globals=global_vars, layer = feat_dicts )
@@ -459,7 +480,7 @@ class reportWizard:
                         else:
                             view_box = getFrame(feature.geometry().boundingBox())
                         print ("GEOM BOX", feature.geometry().boundingBox().width() )
-                        img = self.canvas_image(box=view_box,width=width,height=height)
+                        img = self.canvas_image(box=view_box,width=width,height=height,theme=theme)
                         img.save(img_temppath)
                         
                     elif image_metadata[0] == 'layer':
