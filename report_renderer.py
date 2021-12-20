@@ -24,6 +24,7 @@
 
 from typing import OrderedDict
 from qgis.PyQt.QtCore import QSize, Qt, QByteArray, QBuffer, QIODevice
+from qgis.PyQt.QtGui import QImage
 
 from qgis.gui import QgsMapCanvas
 from qgis.core import (
@@ -236,17 +237,13 @@ class canvas_image_exporter:
         image = job.renderedImage()
         return image
 
-    def base64_shot(self, extent, xsize, ysize, theme, around_border):
-        image = self.image_shot(extent,xsize,ysize,theme,around_border)
-
-        #canvas_image = QImage(image.width(), image.height(), QImage.Format_ARGB32)
-        #canvas_image.fill(Qt.transparent)
-        #p = QPainter(canvas_image)
-        #mask = image.createMaskFromColor(QColor(255, 255, 255).rgb(), Qt.MaskInColor)
-        #p.setClipRegion(QRegion(QBitmap(QPixmap.fromImage(mask))))
-        #p.drawPixmap(0, 0, QPixmap.fromImage(image))
-        #p.end()
-
+    def base64_shot(self, extent, xsize, ysize, theme):
+        image = self.image_shot(extent,xsize,ysize,theme)
+        return self.img2base64(image)
+    
+    def img2base64(self, image):
+        if not isinstance(image, QImage):
+            image = QImage(image)
         ba = QByteArray()
         buffer = QBuffer(ba)
         buffer.open(QIODevice.WriteOnly)
