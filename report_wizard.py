@@ -222,7 +222,7 @@ class reportWizard:
         dialog.show()
         dialog.exec_()
         results = dialog.results()
-        dialog.setResults(results["OUTPUT_ODT"])
+        #dialog.setResults(results["OUTPUT_ODT"])
         dialog.close()
         print("results", results)
 
