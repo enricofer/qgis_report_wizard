@@ -196,11 +196,17 @@ class reportWizard:
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
         self.initProcessing()
-        icon_path = ':/plugins/report_wizard/icon.png'
+        icon_path = os.path.join(self.plugin_dir, 'icon_odt.png')
         self.add_action(
             icon_path,
             text=self.tr(u''),
-            callback=self.run,
+            callback=self.run_odt,
+            parent=self.iface.mainWindow())
+        icon_path = os.path.join(self.plugin_dir, 'icon_md.png')
+        self.add_action(
+            icon_path,
+            text=self.tr(u''),
+            callback=self.run_md,
             parent=self.iface.mainWindow())
 
         # will be set False in run()
@@ -216,13 +222,21 @@ class reportWizard:
             self.iface.removeToolBarIcon(action)
         QgsApplication.processingRegistry().removeProvider(self.provider)
 
-    def run(self):        
+    def run_odt(self):        
         params = {} 
         dialog = createAlgorithmDialog('report_wizard:odt_report', params)
         dialog.show()
         dialog.exec_()
         results = dialog.results()
-        #dialog.setResults(results["OUTPUT_ODT"])
+        dialog.close()
+        print("results", results)
+
+    def run_md(self):        
+        params = {} 
+        dialog = createAlgorithmDialog('report_wizard:md_report', params)
+        dialog.show()
+        dialog.exec_()
+        results = dialog.results()
         dialog.close()
         print("results", results)
 
