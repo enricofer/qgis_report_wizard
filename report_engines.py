@@ -54,13 +54,10 @@ def layout_export(value,image_metadata,img_path,img_size,as_is=None):
     layout = manager.layoutByName(image_metadata[1])
     if image_metadata[0] == 'atlas': # is atlas
         layout.atlas().seekTo(value['id'])
-        print ("SEEKto", value['id'])
         layout.atlas().refreshCurrentFeature()
     exporter = QgsLayoutExporter(layout)
-    print ("UNITS",layout.pageCollection().page(0).pageSize() )
     aspect_ratio = layout.pageCollection().page(0).pageSize().width()/layout.pageCollection().page(0).pageSize().height()
     settings = exporter.ImageExportSettings()
-    print (settings.imageSize)
     if not as_is:
         if img_size["width"] > img_size["height"]:
             img_size["height"] = img_size["width"]*aspect_ratio
@@ -71,7 +68,6 @@ def layout_export(value,image_metadata,img_path,img_size,as_is=None):
     settings.cropToContents = False
     #settings.pages = [0]
     res = exporter.exportToImage(img_path, settings)
-    print ("LAYOUT EXPORT RESULT",res, img_path, exporter.errorFile())
     if res:
         return img_path
     else:
@@ -91,10 +87,8 @@ class markdown_renderer(abstact_report_engine):
             img = self.canvas_image(box,width,height,theme)
             img.save(img_path)
             path, img_name = os.path.split(img_path)
-            print ("IMAGE EXPORT RESULT ",path, img_path)
             return img_name
         else:
-            print ("IMAGE EXPORT RESULT AS SINGLE FILE",img_path)
             return self.canvas_base64_image(box,width,height,theme)
 
     def image_render(self, value,width=300,height=300,dpi=200,box=None,center=None,atlas=None,theme=None,around_border=0.1,mimetype="image/png",filter=None,**kwargs):
@@ -103,12 +97,10 @@ class markdown_renderer(abstact_report_engine):
             image_metadata = ["atlas",atlas]
         else:
             image_metadata = value["image"].split(":")
-        print ("image metadata",image_metadata, kwargs.keys())
 
         img_temppath = tempfile.NamedTemporaryFile(suffix=".png",delete=False,dir=self.tempdir).name
 
         if image_metadata[0] == 'canvas':
-            print ("CANVAAS", theme)
             view_box = self.iface.mapCanvas().extent()
             if self.as_single_file:
                 img_temppath = None
@@ -127,7 +119,6 @@ class markdown_renderer(abstact_report_engine):
                 view_box = pointFeatbox
             else:
                 view_box = feature.geometry().boundingBox()
-            print ("GEOM BOX", feature.geometry().boundingBox().width() )
             if self.as_single_file:
                 img_temppath = None
             return self.export_image(view_box, width, height, theme, img_temppath, around_border)
@@ -206,7 +197,6 @@ class odt_renderer(abstact_report_engine):
             def getFrame(reference_frame):
                 centerxy = center
                 bb = box
-                print ("getFrame", bb, centerxy, scale_denominator, theme )
                 if scale_denominator:
                     if not centerxy:
                         if bb:
@@ -241,9 +231,8 @@ class odt_renderer(abstact_report_engine):
                 image_metadata = ["atlas",atlas]
             else:
                 image_metadata = value["image"].split(":")
-            print ("image metadata",image_metadata, kwargs.keys())
             if not 'svg:width' in kwargs['frame_attrs']:
-                print ("NO svg:width!")
+                raise ("Malformed svg image parameters")
                 return
 
             units = kwargs['frame_attrs']['svg:width'][-2:]
@@ -270,7 +259,6 @@ class odt_renderer(abstact_report_engine):
             img_temppath = tempfile.NamedTemporaryFile(suffix=".png",delete=False).name
             
             if image_metadata[0] == 'canvas':
-                print ("CANVAAS", theme)
                 view_box = getFrame(self.iface.mapCanvas().extent())
                 img = self.canvas_image(box=view_box,width=width,height=height,theme=theme)
                 img.save(img_temppath)
@@ -288,7 +276,6 @@ class odt_renderer(abstact_report_engine):
                     view_box = getFrame(pointFeatbox)
                 else:
                     view_box = getFrame(feature.geometry().boundingBox())
-                print ("GEOM BOX", feature.geometry().boundingBox().width() )
                 img = self.canvas_image(box=view_box,width=width,height=height,theme=theme)
                 img.save(img_temppath)
                 
@@ -308,7 +295,6 @@ class odt_renderer(abstact_report_engine):
             else:
                 raise Exception("Can't export image. Item must be feature, layer or layout.")
                 
-            print (img_temppath)
             return (open(img_temppath, 'rb'), mimetype)
                 
         result = engine.render(template, **self.environment )

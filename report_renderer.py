@@ -36,7 +36,7 @@ from qgis.core import (
     QgsProject,
     QgsMapLayer,
     QgsRectangle,
-    QgsRectangle,
+    QgsGeometry,
 )
 
 import tempfile
@@ -58,9 +58,8 @@ class abstact_report_engine:
             "image": "canvas:"+iface.mapCanvas().theme(),
             "project": QgsProject.instance(),
             "mapCanvas": iface.mapCanvas(),
-            "extent": iface.mapCanvas().extent(),
             "vector_driver":vector_layer_driver,
-            "box": [
+            "bbox": [
                 iface.mapCanvas().extent().xMinimum(),
                 iface.mapCanvas().extent().yMinimum(),
                 iface.mapCanvas().extent().xMaximum(),
@@ -74,7 +73,6 @@ class abstact_report_engine:
                 continue
             var_value = QgsExpressionContextUtils.projectScope(QgsProject.instance()).variable(k)
             self.environment["globals"]["vars"][str(k)] =  var_value if isinstance(var_value, str) else str(var_value).replace("\\","/")
-        print(self.environment["globals"]["vars"])
         self.environment["globals"]["themes"] = list(QgsProject.instance().mapThemeCollection().mapThemes())
 
         self.environment["globals"]["bookmarks"] = []
@@ -83,7 +81,7 @@ class abstact_report_engine:
                 "name": bookmark.name(),
                 "id": bookmark.id(),
                 "extent": bookmark.extent(),
-                "box": [
+                "bbox": [
                     bookmark.extent().xMinimum(),
                     bookmark.extent().yMinimum(),
                     bookmark.extent().xMaximum(),
@@ -132,7 +130,7 @@ class abstact_report_engine:
                 "id": layername,
                 "source": layer.publicSource(),
                 "extent": layer.extent(),
-                "box": [
+                "bbox": [
                     layer.extent().xMinimum(),
                     layer.extent().yMinimum(),
                     layer.extent().xMaximum(),
