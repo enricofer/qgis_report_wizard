@@ -45,7 +45,7 @@ from zipfile import ZipFile,ZIP_DEFLATED
 from jinja2 import Environment, PackageLoader, select_autoescape, FileSystemLoader
 from jinja2 import evalcontextfilter, Markup, escape, meta
 
-from secretary import Renderer    
+from .ext_libs.secretary import Renderer    
 from .report_renderer import abstact_report_engine    
 
 def layout_export(value,image_metadata,img_path,img_size,as_is=None):
