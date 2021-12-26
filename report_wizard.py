@@ -59,8 +59,6 @@ from functools import partial
 from jinja2 import Environment, PackageLoader, select_autoescape, FileSystemLoader
 from jinja2 import evalcontextfilter, Markup, escape, meta
 
-from secretary import Renderer
-
 from processing import execAlgorithmDialog, createAlgorithmDialog
 from .report_wizard_provider import ReportWizardProvider
 
