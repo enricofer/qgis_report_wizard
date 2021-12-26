@@ -69,9 +69,23 @@ Complex, data driven, documents can be generated mixing and nesting conditional 
 
 The plugin provides to the template engine a jinja2 data environment containing most relevant tabular and geographic informations about current project like variables, bookmarks, themes, print layouts, layers and vector features whenever specified. Those informations are stored in four variables that can be used in template:
 
-- **globals**
-- **layers**
-- **features**
-- **layouts**
+- **globals**: information about project and current visualization on map canvas
+- **layers**: information about loaded layers
+- **features**: attributes and geometries about a specified vector layer
+- **layouts**: information about defined print layouts
+
+## the global variable
+
+A dictionary variable containing general informations
+
+| key           | meaning                                                      | tag syntax                                                   |
+| ------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| project       | the project object instance. <br />Further information can be retrieved <br />calling [QgsProject API methods](https://qgis.org/pyqgis/master/core/QgsProject.html) | `{{ globals.project }}`<br />`{{ globals.project.crs() }}`<br />`{{ globals.project.title() }}`<br /> |
+| mapCanvas     | the current map canvas object instance. <br />Further information can be retrieved <br />calling [QgsMapProject API methods](https://qgis.org/pyqgis/master/gui/QgsMapCanvas.html?) | `{{ globals.mapCanvas }}`<br />`{{ globals.mapCanvas.extent() }}`<br />`{{ globals.mapCanvas.scale() }}`<br /> |
+| bbox          | A list containing the current vieport extent [min_x,min_y,max_x, max_y] (list) | `{{ globals.bbox }}`<br />                                   |
+| vector_driver | The reference to the specified vector layer that drives the features object rendering, or `None` in not specified (QgsVectorLayer) | `{{ globals.vector_driver }}`<br />`{% if globals.vector_driver %}{{ globals.vector_driver.name() }}{% endif %}` |
+| vars          | A dictionary containing the current project/user/system defined variables (dictionary) | `{{ globals.vars }}`<br />`{% for key,value in global.vars.items()%} {{ key }}: {{ value }} {% endfor %}`<br /> |
+| bookmarks     | A dictionary containing the extents of the current user/project defined bookmarks (QgsRectangle objects) | {`{ globals.bookmarks }}`<br />`{% for key,value in global.bookmarks.items()%} {{ key }}: {{ value.xMinimum() }} {% endfor %}`<br /> |
+| themes        | A list of the current map canvas themes names (string)       | `{{ globals.themes }}`<br />`{% for theme in global.themes %} {{ theme }} {% endfor %}`<br /> |
 
 ....... 
