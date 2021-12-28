@@ -24,7 +24,7 @@
 
 from typing import OrderedDict
 from qgis.PyQt.QtCore import QSize, Qt, QByteArray, QBuffer, QIODevice
-from qgis.PyQt.QtGui import QImage
+from qgis.PyQt.QtGui import QImage, QPainter, QColor
 
 from qgis.gui import QgsMapCanvas
 from qgis.core import (
@@ -41,6 +41,10 @@ from qgis.core import (
 
 import tempfile
 import os
+import requests
+import mimetypes
+import json
+import urllib.parse as urlparse 
 
 class abstact_report_engine:
 
@@ -49,6 +53,13 @@ class abstact_report_engine:
 
     def isRaster(self,layer):
         return layer["obj"].type() == QgsMapLayerType.RasterLayer
+
+    def isurl(self,url):
+        if isinstance(url,str):
+            urlcomp = urlparse.urlparse(url)
+            if urlcomp.scheme in ("http","https","file"):
+                return True
+        return False
 
     def __init__(self,iface,vector_layer_driver=None, feature_limit=100):
         self.iface = iface
@@ -119,6 +130,8 @@ class abstact_report_engine:
                     geometryType = "nullgeometry"
                 for field in layer.fields().toList():
                     fields.append(field.name())
+            else:
+                geometryType = "nogeometry"
 
             self.environment["layers"].append ({
                 "obj":layer,
@@ -146,7 +159,7 @@ class abstact_report_engine:
                 "type": 'layout',
                 "name": layout.name(),
                 "image": "layout:%s" % layout.name(),
-                "atlas": layout.atlas().coverageLayer().id()  if layout.atlas().enabled() else None
+                "atlas": layout.atlas().coverageLayer()  if layout.atlas().enabled() else None
             }
             self.environment["layouts"].append (layout_def)
 
@@ -162,13 +175,21 @@ class abstact_report_engine:
                     "id": feat.id(),
                     "type": 'feature',
                     "obj": feat,
-                    "geom": feat.geometry(),
+                    "wkt": feat.geometry().asWkt(),
+                    "extent": feat.geometry().boundingBox(),
                     "image": "feature:%s" % (vector_layer_driver.id())
                 }
                 attributes = {}
+                gj = {
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": json.loads(feat.geometry().asJson()),
+                }
                 for field in vector_layer_driver.fields().toList():
                     attributes[field.name()] = feat[field.name()]
                 f_dict["attributes"] = attributes
+                gj["properties"] = attributes
+                f_dict["geojson"] = json.dumps(gj)
                 self.environment["features"].append(f_dict)
                 count += 1
                 if count > feature_limit:
@@ -199,8 +220,82 @@ class abstact_report_engine:
             bb = self.iface.mapCanvas().extent()
         base64_img = self.exporter.base64_shot(bb,xsize,ysize,theme)
         #print (str(base64_img))
-        return base64_img     
+        return base64_img  
 
+    def isurl(self,url):
+        if isinstance(url,str):
+            urlcomp = urlparse.urlparse(url)
+            if urlcomp.scheme in ("http","https","file"):
+                return True
+        return False
+    
+    def url_image(self, url, width=150,height=150):
+        if isinstance(url,str):
+            urlcomp = urlparse.urlparse(url)
+            if urlcomp.scheme in ("http","https"):
+                response = requests.get(url)
+                if response.status_code == 200:
+                    mimetype = response.headers['content-type']
+                    bin_data = response.content
+                else:
+                    raise ("url_image export: Http transfer error")
+            elif urlcomp.scheme == 'file':
+                if os.path.exists(urlcomp.netloc):
+                    mimetype = mimetypes.MimeTypes().guess_type(urlcomp.netloc)[0]
+                    bin_data = open(urlcomp.netloc,"rb").read()
+                else:
+                    print ("url_image export: local path not found " + urlcomp.netloc)
+                    raise ("url_image export: local path not found" )
+            else:
+                raise ("url_image export:Unknown resource protocol")
+
+            img = QImage()
+            img.loadFromData(bin_data)
+            
+            isize = [img.size().width(),img.size().height()]
+            imax = 0 if img.size().width() >= img.size().height() else 1
+            imin = 0 if img.size().width() < img.size().height() else 1
+            iar = img.size().width()/img.size().height()
+
+            wsize = [width,height]
+            wmax = 0 if width >= height else 1
+            wmin = 0 if width < height else 1
+            war = width/height
+
+            if iar >= 1:
+                if war >=1:
+                    tsize = [wsize[wmin]*iar,wsize[wmin]]
+                    tgap = [(wsize[wmax]-wsize[wmin]*iar)/2,0]
+                else:
+                    tsize = [wsize[wmin],wsize[wmin]/iar]
+                    tgap = [0,(wsize[wmax]-wsize[wmin]/iar)/2]
+            else:
+                if war >=1:
+                    tsize = [wsize[wmin]*iar,wsize[wmin]]
+                    tgap = [(wsize[wmax]-wsize[wmin]*iar)/2,0]
+                else:
+                    tsize = [wsize[wmin]/iar,wsize[wmin]]
+                    tgap = [0,(wsize[wmax]-wsize[wmin]/iar)/2]
+
+            scaled_img = img.scaled(*tsize, Qt.KeepAspectRatio,Qt.SmoothTransformation)
+            
+            target_img = QImage(width, height, img.format())
+            target_img.fill(QColor(255,255,255))
+
+            painter = QPainter()
+            painter.begin(target_img)
+            painter.drawImage(*tgap, scaled_img)
+            painter.end()
+
+            if mimetype in ("image/png", "image/jpeg"):
+                return target_img
+            else:
+                raise ("url_image export: wrong resource mimetype. must be png or jpeg image")
+        else:
+            raise ("url_image export: URL is not string")
+    
+    def url_base64_image(self, url, width=150,height=150):
+        return self.exporter.img2base64(self.url_image(url,width,height))
 
 class canvas_image_exporter:
 
@@ -248,4 +343,4 @@ class canvas_image_exporter:
         image.save(buffer, 'PNG')
         base64_data = ba.toBase64().data()
 
-        return "data:image/png;base64," + str(base64_data, 'UTF-8')
+        return "data:image/png;base64," + str(base64_data, 'UTF-8')   

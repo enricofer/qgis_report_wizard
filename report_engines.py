@@ -46,7 +46,7 @@ from jinja2 import Environment, PackageLoader, select_autoescape, FileSystemLoad
 from jinja2 import evalcontextfilter, Markup, escape, meta
 
 from .ext_libs.secretary import Renderer    
-from .report_renderer import abstact_report_engine    
+from .report_renderer import abstact_report_engine   
 
 def layout_export(value,image_metadata,img_path,img_size,as_is=None):
     #https://anitagraser.com/pyqgis-101-introduction-to-qgis-python-programming-for-non-programmers/pyqgis-101-exporting-layouts/
@@ -191,51 +191,10 @@ class odt_renderer(abstact_report_engine):
         @engine.media_loader
         def qgis_images_loader(value,dpi=200,box=None,center=None,atlas=None,theme=None,scale_denominator=None,around_border=0.1,mimetype="image/png",filter=None,**kwargs): 
 
-            if center and not scale_denominator:
-                raise ("Can't specify center without scale_denominator parameter")
-
-            def getFrame(reference_frame):
-                centerxy = center
-                bb = box
-                if scale_denominator:
-                    if not centerxy:
-                        if bb:
-                            centerxy = bb.center()
-                        else:
-                            centerxy = reference_frame.center()
-                    else:
-                        if isinstance(centerxy,str):
-                            coords = centerxy.split(",")
-                            centerxy = QgsPointXY(coords[0],coords[1])
-                        elif not isinstance(centerxy,QgsPointXY):
-                            raise ("Malformed center parameter")
-                    
-                    semiScaledXSize = meterxsize*scale_denominator/2
-                    semiScaledYSize = meterysize*scale_denominator/2
-                    return QgsRectangle(centerxy.x()-semiScaledXSize, centerxy.y()-semiScaledYSize, centerxy.x()+semiScaledXSize, centerxy.y()+semiScaledYSize)
-                else:
-                    if not bb:
-                        bb = reference_frame
-
-                    if around_border:
-                        if xsize >= ysize:
-                            dim = bb.xMaximum() - bb.xMinimum()
-                        else:
-                            dim = bb.yMaximum() - bb.yMinimum()
-                        dim = dim*around_border
-                        bb.grow(dim)
-                    return bb
-
-
-            if atlas:
-                image_metadata = ["atlas",atlas]
-            else:
-                image_metadata = value["image"].split(":")
-            if not 'svg:width' in kwargs['frame_attrs']:
-                raise ("Malformed svg image parameters")
-                return
-
+            xsize = float(kwargs['frame_attrs']['svg:width'][:-2])
+            ysize = float(kwargs['frame_attrs']['svg:height'][:-2])
             units = kwargs['frame_attrs']['svg:width'][-2:]
+
             if units == "cm":
                 m_conversion_factor = 0.01
                 reverse_factor = 2.54
@@ -245,9 +204,6 @@ class odt_renderer(abstact_report_engine):
             elif units == "mm":
                 m_conversion_factor = 0.001
                 reverse_factor = 25.4
-            
-            xsize = float(kwargs['frame_attrs']['svg:width'][:-2])
-            ysize = float(kwargs['frame_attrs']['svg:height'][:-2])
 
             meterxsize = xsize*m_conversion_factor
             meterysize = ysize*m_conversion_factor
@@ -257,43 +213,95 @@ class odt_renderer(abstact_report_engine):
             aspect_ratio = width/height
 
             img_temppath = tempfile.NamedTemporaryFile(suffix=".png",delete=False).name
-            
-            if image_metadata[0] == 'canvas':
-                view_box = getFrame(self.iface.mapCanvas().extent())
-                img = self.canvas_image(box=view_box,width=width,height=height,theme=theme)
-                img.save(img_temppath)
 
-            elif image_metadata[0] == 'feature':
-                layer = QgsProject.instance().mapLayer(image_metadata[1])
-                feature = layer.getFeature(value['id'])
-                QgsExpressionContextUtils.setLayerVariable(layer,"atlas_featureid", feature.id())
-                QgsExpressionContextUtils.setLayerVariable(layer,"atlas_feature", feature)
-                if layer.geometryType() == QgsWkbTypes.PointGeometry:
-                    p = feature.geometry().boundingBox().center()
-                    halfwidth = self.iface.mapCanvas().extent().width()/8
-                    halfheight = halfwidth = self.iface.mapCanvas().extent().height()/4
-                    pointFeatbox = QgsRectangle(p.x()-halfwidth,p.y()-halfheight,p.x()+halfwidth,p.y()+halfheight)
-                    view_box = getFrame(pointFeatbox)
-                else:
-                    view_box = getFrame(feature.geometry().boundingBox())
-                img = self.canvas_image(box=view_box,width=width,height=height,theme=theme)
+            if self.isurl(value):
+                img = self.url_image(value,width,height)
                 img.save(img_temppath)
-                
-            elif image_metadata[0] == 'layer':
-                layer = QgsProject.instance().mapLayer(image_metadata[1])
-                view_box = getFrame(layer.extent())
-                img = self.canvas_image(box=view_box,width=width,height=height,theme=layer)
-                img.save(img_temppath)
-                
-            elif image_metadata[0] in ('layout', 'atlas'):
-                size = {
-                    "width":width,
-                    "height":height,
-                    "dpi":dpi
-                }
-                res = layout_export(value,image_metadata,img_temppath,size,as_is=False)
+            
             else:
-                raise Exception("Can't export image. Item must be feature, layer or layout.")
+
+                if center and not scale_denominator:
+                    raise ("Can't specify center without scale_denominator parameter")
+
+                def getFrame(reference_frame):
+                    centerxy = center
+                    bb = box
+                    if scale_denominator:
+                        if not centerxy:
+                            if bb:
+                                centerxy = bb.center()
+                            else:
+                                centerxy = reference_frame.center()
+                        else:
+                            if isinstance(centerxy,str):
+                                coords = centerxy.split(",")
+                                centerxy = QgsPointXY(coords[0],coords[1])
+                            elif not isinstance(centerxy,QgsPointXY):
+                                raise ("Malformed center parameter")
+                        
+                        semiScaledXSize = meterxsize*scale_denominator/2
+                        semiScaledYSize = meterysize*scale_denominator/2
+                        return QgsRectangle(centerxy.x()-semiScaledXSize, centerxy.y()-semiScaledYSize, centerxy.x()+semiScaledXSize, centerxy.y()+semiScaledYSize)
+                    else:
+                        if not bb:
+                            bb = reference_frame
+
+                        if around_border:
+                            if xsize >= ysize:
+                                dim = bb.xMaximum() - bb.xMinimum()
+                            else:
+                                dim = bb.yMaximum() - bb.yMinimum()
+                            dim = dim*around_border
+                            bb.grow(dim)
+                        return bb
+
+                if atlas:
+                    image_metadata = ["atlas",atlas]
+                else:
+                    image_metadata = value["image"].split(":")
+                if not 'svg:width' in kwargs['frame_attrs']:
+                    raise ("Malformed svg image parameters")
+                    return
+
+                meterxsize = xsize*m_conversion_factor
+                meterysize = ysize*m_conversion_factor
+                
+                if image_metadata[0] == 'canvas':
+                    view_box = getFrame(self.iface.mapCanvas().extent())
+                    img = self.canvas_image(box=view_box,width=width,height=height,theme=theme)
+                    img.save(img_temppath)
+
+                elif image_metadata[0] == 'feature':
+                    layer = QgsProject.instance().mapLayer(image_metadata[1])
+                    feature = layer.getFeature(value['id'])
+                    QgsExpressionContextUtils.setLayerVariable(layer,"atlas_featureid", feature.id())
+                    QgsExpressionContextUtils.setLayerVariable(layer,"atlas_feature", feature)
+                    if layer.geometryType() == QgsWkbTypes.PointGeometry:
+                        p = feature.geometry().boundingBox().center()
+                        halfwidth = self.iface.mapCanvas().extent().width()/8
+                        halfheight = halfwidth = self.iface.mapCanvas().extent().height()/4
+                        pointFeatbox = QgsRectangle(p.x()-halfwidth,p.y()-halfheight,p.x()+halfwidth,p.y()+halfheight)
+                        view_box = getFrame(pointFeatbox)
+                    else:
+                        view_box = getFrame(feature.geometry().boundingBox())
+                    img = self.canvas_image(box=view_box,width=width,height=height,theme=theme)
+                    img.save(img_temppath)
+                    
+                elif image_metadata[0] == 'layer':
+                    layer = QgsProject.instance().mapLayer(image_metadata[1])
+                    view_box = getFrame(layer.extent())
+                    img = self.canvas_image(box=view_box,width=width,height=height,theme=layer)
+                    img.save(img_temppath)
+                    
+                elif image_metadata[0] in ('layout', 'atlas'):
+                    size = {
+                        "width":width,
+                        "height":height,
+                        "dpi":dpi
+                    }
+                    res = layout_export(value,image_metadata,img_temppath,size,as_is=False)
+                else:
+                    raise Exception("Can't export image. Item must be feature, layer or layout.")
                 
             return (open(img_temppath, 'rb'), mimetype)
                 
