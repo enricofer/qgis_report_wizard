@@ -34,7 +34,7 @@ The statements tags define blocks of text that can be conditionally rendered or 
 
 **the conditional tag:**
 
-```django
+```jinja2
 {% if condition1 %} 
 block of text to be rendered if condition1 is true
 {% elif condition2 %} 
@@ -48,7 +48,7 @@ within `if/endif` tags `elif` and `else` tags are optional
 
 **the for cycle tag:**
 
-```
+```jinja2
 {% for item in list %}
 block of text to be repeated for each item: {{ item }} in list
 {% endfor %}
@@ -56,7 +56,7 @@ block of text to be repeated for each item: {{ item }} in list
 
 the cycle statement typically iterate over a list variable but can be used to iterate over a dictionary  object:
 
-```
+```jinja2
 {% for key,value in dictionary.items() %}
 block of text to be repeated for each dictionary item {{ value }}
 accessible by {{ key }} key
@@ -70,9 +70,14 @@ Complex, data driven, documents can be generated mixing and nesting conditional 
 The plugin provides to the template engine a jinja2 data environment containing most relevant tabular and geographic informations about current project like variables, bookmarks, themes, print layouts, layers and vector features whenever specified. Those informations are stored in four variables that can be used in template:
 
 - **globals**: information about project and current visualization on map canvas
+
 - **layers**: information about loaded layers
+
 - **features**: attributes and geometries about a specified vector layer
+
 - **layouts**: information about defined print layouts
+
+  
 
 ## the global variable
 
@@ -82,10 +87,91 @@ A dictionary variable containing general informations
 | ------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | project       | the project object instance. <br />Further information can be retrieved <br />calling [QgsProject API methods](https://qgis.org/pyqgis/master/core/QgsProject.html) | `{{ globals.project }}`<br />`{{ globals.project.crs() }}`<br />`{{ globals.project.title() }}`<br /> |
 | mapCanvas     | the current map canvas object instance. <br />Further information can be retrieved <br />calling [QgsMapProject API methods](https://qgis.org/pyqgis/master/gui/QgsMapCanvas.html?) | `{{ globals.mapCanvas }}`<br />`{{ globals.mapCanvas.extent() }}`<br />`{{ globals.mapCanvas.scale() }}`<br /> |
-| bbox          | A list containing the current vieport extent [min_x,min_y,max_x, max_y] (list) | `{{ globals.bbox }}`<br />                                   |
+| bbox          | A list containing the current viewport extent [min_x,min_y,max_x, max_y] (list) | `{{ globals.bbox }}`<br />                                   |
 | vector_driver | The reference to the specified vector layer that drives the features object rendering, or `None` in not specified (QgsVectorLayer) | `{{ globals.vector_driver }}`<br />`{% if globals.vector_driver %}{{ globals.vector_driver.name() }}{% endif %}` |
 | vars          | A dictionary containing the current project/user/system defined variables (dictionary) | `{{ globals.vars }}`<br />`{% for key,value in global.vars.items()%} {{ key }}: {{ value }} {% endfor %}`<br /> |
 | bookmarks     | A dictionary containing the extents of the current user/project defined bookmarks (QgsRectangle objects) | {`{ globals.bookmarks }}`<br />`{% for key,value in global.bookmarks.items()%} {{ key }}: {{ value.xMinimum() }} {% endfor %}`<br /> |
 | themes        | A list of the current map canvas themes names (string)       | `{{ globals.themes }}`<br />`{% for theme in global.themes %} {{ theme }} {% endfor %}`<br /> |
 
-....... 
+
+
+## the layers list variable
+
+layers variable contains a iterable list of all project layers that can be accessed by a a for tag cycle
+
+```django
+{% for layer_item in layers %}{{ layer_item.name }}
+{% endfor %}
+```
+
+each item is a dictionary containing the following keys:
+
+| key          | meaning                                                      | tag syntax                                                   |
+| ------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| obj          | the layer object instance. <br />Further information can be retrieved <br />calling [QgsMapLayer API methods](https://qgis.org/pyqgis/master/core/QgsMapLayer.html) and its successors depending of its layerType ([QgsVectorLayer](https://qgis.org/pyqgis/master/core/QgsVectorLayer.html), [QgsRasterLayer](https://qgis.org/pyqgis/master/core/QgsRasterLayer.html) ...) | `{{ layer_item.obj }}`<br />`{{ layer_item.obj.crs().authid() }}`<br />`{{ layer_item.obj.extent() }}`<br /> |
+| layerType    | a string representing the layer type:<br />`vector|raster|plugin|mesh|unknown` | `{{ layer_item.layerType }}`                                 |
+| geometryType | whenever the layer is vector contains a string representing the features geometry type:<br />`point|linestring|polygon|unknown|nullgeometry|nogeometry` | `{{ layer_item.geometryType }}`                              |
+| name         | a string containing the layer name                           | `{{ layer_item.name }}`                                      |
+| id           | a string containing the layer id                             | `{{ layer_item.id }}`                                        |
+| source       | a string containing the URI of the public source of the layer | `{{ layer_item.source }}`                                    |
+| bbox         | A list containing the layer extent [min_x,min_y,max_x, max_y] (list) | `{{ layer_item.bbox}}`                                       |
+| extent       | the extent [QgsRectangle](https://qgis.org/pyqgis/master/core/QgsRectangle.html) object instance | `{{ layer_item.extent.xMinimum() }}`                         |
+| fields       | A list of strings containing the vector layer attributes     | `{% for field_name in layer_item.fields %}{{ field_name }} {% endfor %}` |
+
+
+
+## the features list variable
+
+when a vector layer is specified the layer object is referenced by `global.vector_layer` key and the features geometric and tabular informations are charged into the features list variable that can be accessed by a for-cycle tag:
+
+```jinja2
+{% if globals.vector_layer %}
+List of features of layer {{ globals.vector_layer.name() }}:
+{% for feature_item in features %}{{ feature_item.id }}
+{% endfor %}{% endif %}
+```
+
+If a vector layer is not specified the features list is empty. 
+
+each feature item is a dictionary containing the following keys:
+
+| key     | meaning                                                      | tag syntax                                                   |
+| ------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| obj     | the layer object instance. <br />Further information can be retrieved <br />calling [QgsFeature API methods](https://qgis.org/pyqgis/master/core/QgsFeature.html) | `{{ feature_item.obj }}`<br />`{{ feature_item.obj.geometry().area() }}`<br />`{{ feature_item.obj.hasGeometry() }}`<br /> |
+| id      | the feature id                                               | `{{ feature_item.id }}`                                      |
+| wkt     | the WKT geometry string representation                       | `{{ feature_item.wkt }}`                                     |
+| geojson | the feature GeoJson representation                           | `{{ feature_item.geojson }}`                                 |
+| extent  | the feature geometry extent [QgsRectangle](https://qgis.org/pyqgis/master/core/QgsRectangle.html) object instance | `{{ feature_item.extent.xMinimum() }}`                       |
+
+
+
+## the layouts list variable
+
+The layout variable contains a list of project print layouts. If none is defined the list is empty:
+
+```jinja2
+{% for layout_item in layouts %}{{ layout_item.name }}
+{% endfor %}
+```
+
+each layout item is a dictionary containing the following keys:
+
+| key   | meaning                                                      | tag syntax                                                   |
+| ----- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| obj   | the print layout object instance. <br />Further information can be retrieved <br />calling [QgsPrintLayout API methods](https://qgis.org/pyqgis/master/core/QgsPrintLayout.html) | `{{ layout_item.obj }}`<br />`{{ layout_item.obj.layoutType() }}`<br /> |
+| name  | the string representing the print layout name                | `{{ feature_item.name}}`                                     |
+| atlas | if the layout is defined as atlas, the key content is the coverage vector layer object instance otherwise is `None` | `{% if feature_item.atlas %}{{ feature_item.atlas.name() }}{% endif %}` |
+
+
+
+## the image filter
+
+For Any template object, globals, layers features and print layouts, a image filter is available for inserting a object image in the rendered document. The syntax and the attributes and the usage of the image filter depends on the target file format (md, odt ...) and on objects type (global, layer, feature or print layout) 
+
+
+
+## ODT report generation
+
+The odt template has to follow [secretary module](https://github.com/christopher-ramirez/secretary) guidelines. Basically jinja2 template tags have to to embedded in Libreoffice Writer document as visual user defined fields (CTRL + F2), otherwise encoding issue could happen.  A set of sample odt templates can be found in tmpl directory within plugin homedir.
+
+Ima
