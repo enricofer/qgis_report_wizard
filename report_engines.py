@@ -142,10 +142,10 @@ class markdown_renderer(abstact_report_engine):
                     path, img_name = os.path.split(res)
                     return img_name 
             else:
-                Exception("Can't export layout.")
+                self.report_exception ("md image export: Can't export layout.")
 
         else:
-            raise Exception("Can't export image. Item must be feature, layer or layout.")
+            self.report_exception ("md image export: Can't export image. Item must be globals, feature, layer or layout.",item=value)
 
     def render(self,template,target,embed_images=False):
         template_path,template_filename = os.path.split(template)
@@ -218,10 +218,10 @@ class odt_renderer(abstact_report_engine):
                 img = self.url_image(value,width,height)
                 img.save(img_temppath)
             
-            else:
+            elif isinstance(value,dict) and "image" in value.keys():
 
                 if center and not scale_denominator:
-                    raise ("Can't specify center without scale_denominator parameter")
+                    self.report_exception ("odt image export: Can't specify center without scale_denominator parameter")
 
                 def getFrame(reference_frame):
                     centerxy = center
@@ -237,7 +237,7 @@ class odt_renderer(abstact_report_engine):
                                 coords = centerxy.split(",")
                                 centerxy = QgsPointXY(coords[0],coords[1])
                             elif not isinstance(centerxy,QgsPointXY):
-                                raise ("Malformed center parameter")
+                                self.report_exception ("odt image export: Malformed center parameter",center=type(centerxy))
                         
                         semiScaledXSize = meterxsize*scale_denominator/2
                         semiScaledYSize = meterysize*scale_denominator/2
@@ -260,8 +260,7 @@ class odt_renderer(abstact_report_engine):
                 else:
                     image_metadata = value["image"].split(":")
                 if not 'svg:width' in kwargs['frame_attrs']:
-                    raise ("Malformed svg image parameters")
-                    return
+                    self.report_exception ("odt image export: Malformed svg image parameters",swg_attrs=str(kwargs['frame_attrs']))
 
                 meterxsize = xsize*m_conversion_factor
                 meterysize = ysize*m_conversion_factor
@@ -301,7 +300,9 @@ class odt_renderer(abstact_report_engine):
                     }
                     res = layout_export(value,image_metadata,img_temppath,size,as_is=False)
                 else:
-                    raise Exception("Can't export image. Item must be feature, layer or layout.")
+                    self.report_exception ("odt image export: Can't export image. Item must be globals, feature, layer or layout.",item=value)
+            else:
+                self.report_exception("Can't generate image from object", obj=value)
                 
             return (open(img_temppath, 'rb'), mimetype)
                 

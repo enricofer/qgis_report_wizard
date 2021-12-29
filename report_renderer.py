@@ -37,6 +37,8 @@ from qgis.core import (
     QgsMapLayer,
     QgsRectangle,
     QgsGeometry,
+    Qgis,
+    QgsMessageLog,
 )
 
 import tempfile
@@ -186,7 +188,10 @@ class abstact_report_engine:
                     "geometry": json.loads(feat.geometry().asJson()),
                 }
                 for field in vector_layer_driver.fields().toList():
-                    attributes[field.name()] = feat[field.name()]
+                    try:
+                        attributes[field.name()] = feat[field.name()].toPyObject()[0]
+                    except:
+                        attributes[field.name()] = feat[field.name()]
                 f_dict["attributes"] = attributes
                 gj["properties"] = attributes
                 f_dict["geojson"] = json.dumps(gj)
@@ -199,6 +204,10 @@ class abstact_report_engine:
         
         self.exporter = canvas_image_exporter(iface.mapCanvas())
 
+    def report_exception(self,msg, **kwargs):
+        othermgs = ",".join([(akey+"="+str(aval))for akey,aval in kwargs.items()])
+        QgsMessageLog.logMessage(msg+" "+othermgs, tag="report_wizard", level=Qgis.Info)
+        raise Exception(msg)
 
     def canvas_image(self,box=None,width=150,height=150,theme=None):
         if isinstance(box, QgsRectangle):
@@ -224,6 +233,8 @@ class abstact_report_engine:
 
     def isurl(self,url):
         if isinstance(url,str):
+            if os.path.exists(url):
+                return True
             urlcomp = urlparse.urlparse(url)
             if urlcomp.scheme in ("http","https","file"):
                 return True
@@ -232,22 +243,29 @@ class abstact_report_engine:
     def url_image(self, url, width=150,height=150):
         if isinstance(url,str):
             urlcomp = urlparse.urlparse(url)
-            if urlcomp.scheme in ("http","https"):
-                response = requests.get(url)
+            scheme = urlcomp.scheme
+
+            if os.path.exists(url): # allow simple paths
+                scheme = 'file'
+                url = "file://"+urlparse.quote(url)
+
+            if scheme in ("http","https"):
+                response = requests.get(url,allow_redirects=True, timeout=10)
+                print (response.status_code)
                 if response.status_code == 200:
                     mimetype = response.headers['content-type']
                     bin_data = response.content
                 else:
-                    raise ("url_image export: Http transfer error")
-            elif urlcomp.scheme == 'file':
-                if os.path.exists(urlcomp.netloc):
-                    mimetype = mimetypes.MimeTypes().guess_type(urlcomp.netloc)[0]
-                    bin_data = open(urlcomp.netloc,"rb").read()
+                    self.report_exception ("url_image export: Http transfer error",status=response.status_code,url=url)
+            elif scheme == 'file':
+                url = urlcomp.path
+                if os.path.exists(url):
+                    mimetype = mimetypes.MimeTypes().guess_type(url)[0]
+                    bin_data = open(url,"rb").read()
                 else:
-                    print ("url_image export: local path not found " + urlcomp.netloc)
-                    raise ("url_image export: local path not found" )
+                    self.report_exception ("url_image export: local path not found",path=urlcomp.netloc,urlcomp=str(urlcomp))
             else:
-                raise ("url_image export:Unknown resource protocol")
+                self.report_exception ("url_image export:Unknown resource protocol",scheme=urlcomp.scheme)
 
             img = QImage()
             img.loadFromData(bin_data)
@@ -274,7 +292,7 @@ class abstact_report_engine:
                     tsize = [wsize[wmin]*iar,wsize[wmin]]
                     tgap = [(wsize[wmax]-wsize[wmin]*iar)/2,0]
                 else:
-                    tsize = [wsize[wmin]/iar,wsize[wmin]]
+                    tsize = [wsize[wmin],wsize[wmin]/iar]
                     tgap = [0,(wsize[wmax]-wsize[wmin]/iar)/2]
 
             scaled_img = img.scaled(*tsize, Qt.KeepAspectRatio,Qt.SmoothTransformation)
@@ -290,9 +308,9 @@ class abstact_report_engine:
             if mimetype in ("image/png", "image/jpeg"):
                 return target_img
             else:
-                raise ("url_image export: wrong resource mimetype. must be png or jpeg image")
+                self.report_exception ("url_image export: wrong resource mimetype. must be png or jpeg image",mimetype=mimetype)
         else:
-            raise ("url_image export: URL is not string")
+            self.report_exception ("url_image export: URL is not string",argtype=str(type(url)))
     
     def url_base64_image(self, url, width=150,height=150):
         return self.exporter.img2base64(self.url_image(url,width,height))
