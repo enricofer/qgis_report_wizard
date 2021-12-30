@@ -26,7 +26,7 @@ in the global variable are loaded general informations about the current project
 
 | key         | desc                                                         | tag                                          | result                                                       |
 | ----------- | ------------------------------------------------------------ | -------------------------------------------- | ------------------------------------------------------------ |
-| `project`   | The [QgsProject](https://qgis.org/pyqgis/3.0/core/Project/QgsProject.html) object instance | {% raw %}`{{globals.project }}`{% endraw %}  | {{ globals.project }}<br/>{{ globals.project. }}             |
+| `project`   | The [QgsProject](https://qgis.org/pyqgis/3.0/core/Project/QgsProject.html) object instance | {% raw %}`{{globals.project }}`{% endraw %}  | {{ globals.project }}<br/>{{ globals.project.baseName() }}             |
 | `mapCanvas` | The [QgsMapCanvas](https://qgis.org/pyqgis/3.2/gui/Map/QgsMapCanvas.html) object instance | {% raw %}`{{globals.mapCanvas}}`{% endraw %} | {{ globals.mapCanvas }}<br />{{ globals.mapCanvas.layerCount() }}<br />{{ globals.mapCanvas.scale() }} |
 | `vars`      | A dictionary with the current global variables               | {% raw %}`{{globals.vars}}`{% endraw %}      | {{ globals.vars }}                                           |
 | `box`       | An array with the current map canvas extent [xmin,ymin,xmax,ymax] | {% raw %}`{{globals.box}}`{% endraw %}       | {{ globals.box}}                                             |
@@ -46,5 +46,5 @@ in the global variable are loaded general informations about the current project
 
 | icon                           | f1   | f2   | f3   | f4   |
 | ------------------------------ | ---- | ---- | ---- | ---- |
-{% for layer in layers %} | ![]({{ layer|image(200,200)}}) | {{ layer.name }} | {{ layer.obj.crs().authid() }} |{{ layer.source }}|{{ layer.type }}     |
+{% for layer in layers %} | ![]({{ layer|image(200,200)}}) | {{ layer.name }} | {{ layer.obj.crs().authid() }} |{{ layer.source }}|{{ layer.layerType }}     |
 {% endfor %}
