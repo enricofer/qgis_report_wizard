@@ -72,7 +72,7 @@ class MarkdownGeneratorAlgorithm(QgsProcessingAlgorithm):
         vector_layer = self.parameterAsVectorLayer(parameters, self.VECTOR_LAYER, context)
         feature_limit = self.parameterAsInt(parameters, self.LIMIT, context)
         target = self.parameterAsFileOutput(parameters, self.OUTPUT, context)
-        embed_images = self.parameterAsFileOutput(parameters, self.EMBED_IMAGES, context)
+        embed_images = self.parameterAsBoolean(parameters, self.EMBED_IMAGES, context)
 
         if not target.endswith('.md'):
             targetpath,extension = os.path.splitext(target)
@@ -83,8 +83,7 @@ class MarkdownGeneratorAlgorithm(QgsProcessingAlgorithm):
         result = engine.render(template, target, embed_images)
 
         return {
-            "RESULT": result,
-            "OUTPUT": target
+            "OUTPUT": result
         }
 
     def name(self):
