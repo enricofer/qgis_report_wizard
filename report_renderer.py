@@ -205,8 +205,19 @@ class abstact_report_engine:
         self.exporter = canvas_image_exporter(iface.mapCanvas())
 
     def report_exception(self,msg, **kwargs):
+        noexception = False
+        if "noexception" in kwargs.keys() and kwargs["noexception"]:
+            noexception = True
+        level = Qgis.Warning
+        if "level" in kwargs.keys():
+            try:
+                level = getattr(Qgis,kwargs["level"])  
+            except:
+                pass
         othermgs = ",".join([(akey+"="+str(aval))for akey,aval in kwargs.items()])
-        QgsMessageLog.logMessage(msg+" "+othermgs, tag="report_wizard", level=Qgis.Info)
+        QgsMessageLog.logMessage(msg+" "+othermgs, tag="report_wizard", level=level)
+        if noexception:
+            return
         raise Exception(msg)
 
     def canvas_image(self,box=None,width=150,height=150,theme=None):
@@ -256,16 +267,19 @@ class abstact_report_engine:
                     mimetype = response.headers['content-type']
                     bin_data = response.content
                 else:
-                    self.report_exception ("url_image export: Http transfer error",status=response.status_code,url=url)
+                    self.report_exception ("url_image export: Http transfer error",status=response.status_code,url=url,noexception=True)
+                    return
             elif scheme == 'file':
                 url = urlcomp.path
                 if os.path.exists(url):
                     mimetype = mimetypes.MimeTypes().guess_type(url)[0]
                     bin_data = open(url,"rb").read()
                 else:
-                    self.report_exception ("url_image export: local path not found",path=urlcomp.netloc,urlcomp=str(urlcomp))
+                    self.report_exception ("url_image export: local path not found",path=urlcomp.netloc,urlcomp=str(urlcomp),noexception=True)
+                    
             else:
-                self.report_exception ("url_image export:Unknown resource protocol",scheme=urlcomp.scheme)
+                self.report_exception ("url_image export:Unknown resource protocol",scheme=urlcomp.scheme,noexception=True)
+                return
 
             img = QImage()
             img.loadFromData(bin_data)
@@ -308,9 +322,10 @@ class abstact_report_engine:
             if mimetype in ("image/png", "image/jpeg"):
                 return target_img
             else:
-                self.report_exception ("url_image export: wrong resource mimetype. must be png or jpeg image",mimetype=mimetype)
+                self.report_exception ("url_image export: wrong resource mimetype. must be png or jpeg image",mimetype=mimetype,noexception=True)
+                return
         else:
-            self.report_exception ("url_image export: URL is not string",argtype=str(type(url)))
+            self.report_exception ("url_image export: URL is not string",argtype=str(type(url)),noexception=True)
     
     def url_base64_image(self, url, width=150,height=150):
         return self.exporter.img2base64(self.url_image(url,width,height))

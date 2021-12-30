@@ -75,7 +75,7 @@ def layout_export(value,image_metadata,img_path,img_size,as_is=None):
 
 class markdown_renderer(abstact_report_engine):
 
-    def export_image(self,box,width,height,theme,img_path,around_border):
+    def export_canvas_image(self,box,width,height,theme,img_path,around_border):
         if around_border:
             if width >= height:
                 dim = box.xMaximum() - box.xMinimum()
@@ -91,66 +91,84 @@ class markdown_renderer(abstact_report_engine):
         else:
             return self.canvas_base64_image(box,width,height,theme)
 
-    def image_render(self, value,width=300,height=300,dpi=200,box=None,center=None,atlas=None,theme=None,around_border=0.1,mimetype="image/png",filter=None,**kwargs):
+    def export_url_image(self,url,width,height,img_path):
+        img = self.url_image(url,width,height)
+        if img:
+            img.save(img_path)
+            if self.as_single_file:
+                return self.exporter.img2base64(img)
+            else:            
+                path, img_name = os.path.split(img_path)
+                return img_name
 
-        if atlas:
-            image_metadata = ["atlas",atlas]
-        else:
-            image_metadata = value["image"].split(":")
+    def image_render(self, value,width=300,height=300,dpi=200,box=None,center=None,atlas=None,theme=None,around_border=0.1,mimetype="image/png",filter=None,**kwargs):
 
         img_temppath = tempfile.NamedTemporaryFile(suffix=".png",delete=False,dir=self.tempdir).name
 
-        if image_metadata[0] == 'canvas':
-            view_box = self.iface.mapCanvas().extent()
-            if self.as_single_file:
-                img_temppath = None
-            return self.export_image(view_box, width, height, theme, img_temppath, around_border)
+        if self.isurl(value):
+            return self.export_url_image(value, width, height, img_temppath)
+        
+        elif isinstance(value,dict) and "image" in value.keys():
 
-        elif image_metadata[0] == 'feature':
-            layer = QgsProject.instance().mapLayer(image_metadata[1])
-            feature = layer.getFeature(value['id'])
-            QgsExpressionContextUtils.setLayerVariable(layer,"atlas_featureid", feature.id())
-            QgsExpressionContextUtils.setLayerVariable(layer,"atlas_feature", feature)
-            if layer.geometryType() == QgsWkbTypes.PointGeometry:
-                p = feature.geometry().boundingBox().center()
-                halfwidth = self.iface.mapCanvas().extent().width()/8
-                halfheight = halfwidth = self.iface.mapCanvas().extent().height()/4
-                pointFeatbox = QgsRectangle(p.x()-halfwidth,p.y()-halfheight,p.x()+halfwidth,p.y()+halfheight)
-                view_box = pointFeatbox
+            if atlas:
+                image_metadata = ["atlas",atlas]
             else:
-                view_box = feature.geometry().boundingBox()
-            if self.as_single_file:
-                img_temppath = None
-            return self.export_image(view_box, width, height, theme, img_temppath, around_border)
-            
-        elif image_metadata[0] == 'layer':
-            layer = QgsProject.instance().mapLayer(image_metadata[1])
-            view_box = layer.extent()
-            return self.export_image(view_box, width, height, theme or layer, img_temppath if not self.as_single_file else None, around_border)
-            
-        elif image_metadata[0] in ('layout', 'atlas'):
-            size = {
-                "width":width,
-                "height":height,
-                "dpi":dpi
-            }
-            res = layout_export(value,image_metadata,img_temppath,size,as_is=False)
-            if res:
+                image_metadata = value["image"].split(":")
+
+            if image_metadata[0] == 'canvas':
+                view_box = self.iface.mapCanvas().extent()
                 if self.as_single_file:
-                    return self.exporter.img2base64(res)
-                else:
-                    path, img_name = os.path.split(res)
-                    return img_name 
-            else:
-                self.report_exception ("md image export: Can't export layout.")
+                    img_temppath = None
+                return self.export_canvas_image(view_box, width, height, theme, img_temppath, around_border)
 
-        else:
-            self.report_exception ("md image export: Can't export image. Item must be globals, feature, layer or layout.",item=value)
+            elif image_metadata[0] == 'feature':
+                layer = QgsProject.instance().mapLayer(image_metadata[1])
+                feature = layer.getFeature(value['id'])
+                QgsExpressionContextUtils.setLayerVariable(layer,"atlas_featureid", feature.id())
+                QgsExpressionContextUtils.setLayerVariable(layer,"atlas_feature", feature)
+                if layer.geometryType() == QgsWkbTypes.PointGeometry:
+                    p = feature.geometry().boundingBox().center()
+                    halfwidth = self.iface.mapCanvas().extent().width()/8
+                    halfheight = halfwidth = self.iface.mapCanvas().extent().height()/4
+                    pointFeatbox = QgsRectangle(p.x()-halfwidth,p.y()-halfheight,p.x()+halfwidth,p.y()+halfheight)
+                    view_box = pointFeatbox
+                else:
+                    view_box = feature.geometry().boundingBox()
+                if self.as_single_file:
+                    img_temppath = None
+                return self.export_canvas_image(view_box, width, height, theme, img_temppath, around_border)
+                
+            elif image_metadata[0] == 'layer':
+                layer = QgsProject.instance().mapLayer(image_metadata[1])
+                view_box = layer.extent()
+                return self.export_canvas_image(view_box, width, height, theme or layer, img_temppath if not self.as_single_file else None, around_border)
+                
+            elif image_metadata[0] in ('layout', 'atlas'):
+                size = {
+                    "width":width,
+                    "height":height,
+                    "dpi":dpi
+                }
+                res = layout_export(value,image_metadata,img_temppath,size,as_is=False)
+                if res:
+                    if self.as_single_file:
+                        return self.exporter.img2base64(res)
+                    else:
+                        path, img_name = os.path.split(res)
+                        return img_name 
+                else:
+                    self.report_exception ("md image export: Can't export layout.")
+
+            else:
+                self.report_exception ("md image export: Can't export image. Item must be globals, feature, layer or layout.",item=value)
 
     def render(self,template,target,embed_images=False):
         template_path,template_filename = os.path.split(template)
+        print (template_path, template_filename)
+        loader = FileSystemLoader(template_path)
+        print (loader.list_templates())
         env = Environment(
-            loader=FileSystemLoader(template_path),
+            loader=loader,
             autoescape=select_autoescape(['html', 'xml']),
         )
         self.as_single_file = embed_images
@@ -159,6 +177,7 @@ class markdown_renderer(abstact_report_engine):
         env.filters['isVector'] = self.isVector
         env.filters['isRaster'] = self.isRaster
         template_obj = env.get_template(template_filename)
+        #template_obj = env.from_string(template)
         result = template_obj.render(**self.environment )
         if self.as_single_file:
             output = open(target, 'w')
@@ -216,7 +235,8 @@ class odt_renderer(abstact_report_engine):
 
             if self.isurl(value):
                 img = self.url_image(value,width,height)
-                img.save(img_temppath)
+                if img:
+                    img.save(img_temppath)
             
             elif isinstance(value,dict) and "image" in value.keys():
 
