@@ -96,7 +96,7 @@ class markdown_renderer(abstact_report_engine):
         else:
             return "Image not found"
 
-    def image_render(self, value,width=300,height=300,dpi=200,box=None,center=None,atlas=None,theme=None,around_border=0.1,mimetype="image/png",filter=None,**kwargs):
+    def image_render(self, value,width=300,height=300,dpi=200,atlas=None,theme=None,around_border=0.1,mimetype="image/png",filter=None,**kwargs):
 
         img_temppath = tempfile.NamedTemporaryFile(suffix=".png",delete=False,dir=self.tempdir).name
 
@@ -201,7 +201,7 @@ class odt_renderer(abstact_report_engine):
         engine.environment.filters['isRaster'] = self.isRaster
         
         @engine.media_loader
-        def qgis_images_loader(value,dpi=200,box=None,center=None,atlas=None,theme=None,scale_denominator=None,around_border=0.1,mimetype="image/png",filter=None,**kwargs): 
+        def qgis_images_loader(value,dpi=200,extent=None,center=None,atlas=None,theme=None,scale_denominator=None,around_border=0.1,mimetype="image/png",filter=None,**kwargs): 
 
             xsize = float(kwargs['frame_attrs']['svg:width'][:-2])
             ysize = float(kwargs['frame_attrs']['svg:height'][:-2])
@@ -238,7 +238,16 @@ class odt_renderer(abstact_report_engine):
 
                 def getFrame(reference_frame):
                     centerxy = center
-                    bb = box
+                    if extent:
+                        if isinstance(extent,QgsRectangle):
+                            bb = extent
+                        else:
+                            try:
+                                bb = QgsRectangle(*extent)
+                            except:
+                                self.report_exception ("odt image export: Malformed extent list",extent=str(extent))
+                    else:
+                        bb = None
                     if scale_denominator:
                         if not centerxy:
                             if bb:
@@ -246,11 +255,10 @@ class odt_renderer(abstact_report_engine):
                             else:
                                 centerxy = reference_frame.center()
                         else:
-                            if isinstance(centerxy,str):
-                                coords = centerxy.split(",")
-                                centerxy = QgsPointXY(coords[0],coords[1])
+                            if isinstance(centerxy,list):
+                                centerxy = QgsPointXY(*centerxy)
                             elif not isinstance(centerxy,QgsPointXY):
-                                self.report_exception ("odt image export: Malformed center parameter",center=type(centerxy))
+                                self.report_exception ("odt image export: Malformed center parameter",center=str(centerxy))
                         
                         semiScaledXSize = meterxsize*scale_denominator/2
                         semiScaledYSize = meterysize*scale_denominator/2
