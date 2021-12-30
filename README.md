@@ -166,7 +166,7 @@ each layout item is a dictionary containing the following keys:
 
 ## the image filter
 
-For Any template object, globals, layers features and print layouts, a image filter is available for inserting a object image in the rendered document. The syntax and the attributes and the usage of the image filter depends on the target file format (md, odt ...) and on objects type (global, layer, feature or print layout) 
+For Any template object, globals, layers features and print layouts, a image filter is available for inserting a object image in the rendered document. The syntax and the attributes and the usage of the image filter depends on the target file format (md, odt ...) and on objects type (global, layer, feature or print layout or a feature attribute containing a url or a path) 
 
 
 
@@ -174,4 +174,26 @@ For Any template object, globals, layers features and print layouts, a image fil
 
 The odt template has to follow [secretary module](https://github.com/christopher-ramirez/secretary) guidelines. Basically jinja2 template tags have to to embedded in Libreoffice Writer document as visual user defined fields (CTRL + F2), otherwise encoding issue could happen.  A set of sample odt templates can be found in tmpl directory within plugin homedir.
 
-Ima
+![](tmpl/rwl1.png)
+
+Images are included in ODT document in a slightly different way, A placeholder image has to be placed in the desired size and position and the image filtered tag has to be placed in the "name" field under "Options" tab of Libreoffice image properties dialog. 
+
+![](tmpl/rwl2.png)
+
+The odt template engine will replace the placeholder image with the new rendered on-the-fly image following the image filtered tag:
+
+```
+{{ globals|image() }} {{ feature|image() }} {{ feature.attributes.picture|image() }}
+```
+
+the image filter have the following optional parameters:
+
+| parameter         |                                                              |
+| ----------------- | ------------------------------------------------------------ |
+| dpi               | A integer number specifying the output resolution of the image 		(default = 200) |
+| extent            | A extent [QgsRectangle](https://qgis.org/pyqgis/master/core/QgsRectangle.html?highlight=qgsrectangle#module-QgsRectangle) object or a [xmin,ymin,xmax,ymax] list that specify the map context of the image |
+| center            | A point [QgsPointXY](https://qgis.org/pyqgis/master/core/QgsPointXY.html) object or a [x,y] coordinate list that specify the center of the map context of the image. To be used in conjunction with scale_denominator |
+| scale_denominator | A number specifiing the scale denominator of the output image, for example 5000 for 1:5000 |
+| theme             | A string indicating a defined map canvas theme of representation |
+| around_border     | A floating number representing the amount of a void border around the output image. This parameter is not considered when scale_denominator is specified (default = 0.1) |
+
