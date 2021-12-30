@@ -262,7 +262,6 @@ class abstact_report_engine:
 
             if scheme in ("http","https"):
                 response = requests.get(url,allow_redirects=True, timeout=10)
-                print (response.status_code)
                 if response.status_code == 200:
                     mimetype = response.headers['content-type']
                     bin_data = response.content
@@ -337,6 +336,7 @@ class canvas_image_exporter:
         self.canvas = QgsMapCanvas()
         self.canvas.setCanvasColor(Qt.white)
         self.canvas.setLayers(self.main_canvas.mapSettings().layers())
+        self.canvas.setDestinationCrs(self.main_canvas.project().crs())
         self.canvas.refresh()
         self.canvas.update()
         self.settings = self.main_canvas.mapSettings()
@@ -354,7 +354,6 @@ class canvas_image_exporter:
         self.canvas.setExtent(extent)
         self.canvas.refresh()
         self.canvas.update()
-        print ("export settings2:", extent,"xsize:", extent.xMaximum() - extent.xMinimum(),xsize,"ysize:", extent.yMaximum() - extent.yMinimum(),ysize )
         mapSettings = self.canvas.mapSettings()
         mapSettings.setOutputSize( QSize(xsize,ysize ) )
         job = QgsMapRendererParallelJob(mapSettings)
