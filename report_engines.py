@@ -48,7 +48,7 @@ from jinja2 import evalcontextfilter, Markup, escape, meta
 from .ext_libs.secretary import Renderer    
 from .report_renderer import abstact_report_engine   
 
-def layout_export(value,image_metadata,img_path,img_size,as_is=None):
+def layout_export(value,image_metadata,img_size,as_is=None):
     #https://anitagraser.com/pyqgis-101-introduction-to-qgis-python-programming-for-non-programmers/pyqgis-101-exporting-layouts/
     manager = QgsProject.instance().layoutManager()
     layout = manager.layoutByName(image_metadata[1])
@@ -57,21 +57,14 @@ def layout_export(value,image_metadata,img_path,img_size,as_is=None):
         layout.atlas().refreshCurrentFeature()
     exporter = QgsLayoutExporter(layout)
     aspect_ratio = layout.pageCollection().page(0).pageSize().width()/layout.pageCollection().page(0).pageSize().height()
-    settings = exporter.ImageExportSettings()
+    
     if not as_is:
         if img_size["width"] > img_size["height"]:
             img_size["height"] = img_size["width"]*aspect_ratio
         else:
             img_size["width"] = img_size["height"]*aspect_ratio
-    settings.imageSize = QSize(img_size["width"] ,img_size["height"])
-    settings.dpi = img_size["dpi"]
-    settings.cropToContents = False
-    #settings.pages = [0]
-    res = exporter.exportToImage(img_path, settings)
-    if res:
-        return img_path
-    else:
-        return None
+    res = exporter.renderPageToImage(0, QSize(img_size["width"] ,img_size["height"]), img_size["dpi"])
+    return res
 
 class markdown_renderer(abstact_report_engine):
 
@@ -94,19 +87,21 @@ class markdown_renderer(abstact_report_engine):
     def export_url_image(self,url,width,height,img_path):
         img = self.url_image(url,width,height)
         if img:
-            img.save(img_path)
-            if self.as_single_file:
-                return self.exporter.img2base64(img)
-            else:            
+            if img_path:
+                img.save(img_path)            
                 path, img_name = os.path.split(img_path)
                 return img_name
+            else:
+                return self.exporter.img2base64(img)
+        else:
+            return "Image not found"
 
     def image_render(self, value,width=300,height=300,dpi=200,box=None,center=None,atlas=None,theme=None,around_border=0.1,mimetype="image/png",filter=None,**kwargs):
 
         img_temppath = tempfile.NamedTemporaryFile(suffix=".png",delete=False,dir=self.tempdir).name
 
         if self.isurl(value):
-            return self.export_url_image(value, width, height, img_temppath)
+            return self.export_url_image(value, width, height, img_temppath if not self.embed_images else None)
         
         elif isinstance(value,dict) and "image" in value.keys():
 
@@ -117,9 +112,7 @@ class markdown_renderer(abstact_report_engine):
 
             if image_metadata[0] == 'canvas':
                 view_box = self.iface.mapCanvas().extent()
-                if self.as_single_file:
-                    img_temppath = None
-                return self.export_canvas_image(view_box, width, height, theme, img_temppath, around_border)
+                return self.export_canvas_image(view_box, width, height, theme, img_temppath if not self.embed_images else None, around_border)
 
             elif image_metadata[0] == 'feature':
                 layer = QgsProject.instance().mapLayer(image_metadata[1])
@@ -134,14 +127,12 @@ class markdown_renderer(abstact_report_engine):
                     view_box = pointFeatbox
                 else:
                     view_box = feature.geometry().boundingBox()
-                if self.as_single_file:
-                    img_temppath = None
-                return self.export_canvas_image(view_box, width, height, theme, img_temppath, around_border)
+                return self.export_canvas_image(view_box, width, height, theme, img_temppath if not self.embed_images else None, around_border)
                 
             elif image_metadata[0] == 'layer':
                 layer = QgsProject.instance().mapLayer(image_metadata[1])
                 view_box = layer.extent()
-                return self.export_canvas_image(view_box, width, height, theme or layer, img_temppath if not self.as_single_file else None, around_border)
+                return self.export_canvas_image(view_box, width, height, theme or layer, img_temppath if not self.embed_images else None, around_border)
                 
             elif image_metadata[0] in ('layout', 'atlas'):
                 size = {
@@ -149,11 +140,12 @@ class markdown_renderer(abstact_report_engine):
                     "height":height,
                     "dpi":dpi
                 }
-                res = layout_export(value,image_metadata,img_temppath,size,as_is=False)
+                res = layout_export(value,image_metadata,size,as_is=False)
                 if res:
-                    if self.as_single_file:
+                    if self.embed_images:
                         return self.exporter.img2base64(res)
                     else:
+                        res.save(img_temppath)
                         path, img_name = os.path.split(res)
                         return img_name 
                 else:
@@ -164,14 +156,12 @@ class markdown_renderer(abstact_report_engine):
 
     def render(self,template,target,embed_images=False):
         template_path,template_filename = os.path.split(template)
-        print (template_path, template_filename)
         loader = FileSystemLoader(template_path)
-        print (loader.list_templates())
         env = Environment(
             loader=loader,
             autoescape=select_autoescape(['html', 'xml']),
         )
-        self.as_single_file = embed_images
+        self.embed_images = embed_images
         self.tempdir = tempfile.mkdtemp(suffix=None, prefix=None, dir=None)
         env.filters["image"] = self.image_render
         env.filters['isVector'] = self.isVector
@@ -179,13 +169,15 @@ class markdown_renderer(abstact_report_engine):
         template_obj = env.get_template(template_filename)
         #template_obj = env.from_string(template)
         result = template_obj.render(**self.environment )
-        if self.as_single_file:
+        if self.embed_images:
             output = open(target, 'w')
             output.write(result)
+            output.close()
         else:
             target_path,target_filename = os.path.split(target)
             output = open(os.path.join(self.tempdir,target_filename), 'w')
             output.write(result)
+            output.close()
             target = target+".zip"
             md_files = os.listdir(self.tempdir)
             zip = ZipFile(target, "w", ZIP_DEFLATED)
@@ -198,6 +190,7 @@ class markdown_renderer(abstact_report_engine):
 
             zip.close()
 
+        self.report_exception("Markdown document exported",target=target,level="Info")
         return target
                 
 class odt_renderer(abstact_report_engine):
@@ -318,7 +311,9 @@ class odt_renderer(abstact_report_engine):
                         "height":height,
                         "dpi":dpi
                     }
-                    res = layout_export(value,image_metadata,img_temppath,size,as_is=False)
+                    res = layout_export(value,image_metadata,size,as_is=False)
+                    if res:
+                        res.save(img_temppath)
                 else:
                     self.report_exception ("odt image export: Can't export image. Item must be globals, feature, layer or layout.",item=value)
             else:
