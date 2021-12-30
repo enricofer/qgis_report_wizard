@@ -84,7 +84,7 @@ class MarkdownGeneratorAlgorithm(QgsProcessingAlgorithm):
 
         return {
             "RESULT": result,
-            "OUTPUT_MD": target
+            "OUTPUT": target
         }
 
     def name(self):

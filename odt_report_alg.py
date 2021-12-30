@@ -80,7 +80,7 @@ class OdtGeneratorAlgorithm(QgsProcessingAlgorithm):
 
         return {
             "RESULT": result,
-            "OUTPUT_ODT": target
+            "OUTPUT": target
         }
 
     def name(self):

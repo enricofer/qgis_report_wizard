@@ -22,14 +22,15 @@
  ***************************************************************************/
 """
 from typing import OrderedDict
-from qgis.PyQt.QtCore import QSize, QSettings, QTranslator, QCoreApplication, QFileInfo, Qt, QByteArray, QBuffer, QIODevice
-from qgis.PyQt.QtGui import QIcon, QImage, QPainter, QRegion, QBitmap, QPixmap
-from qgis.PyQt.QtWidgets import QAction, QFileDialog, QToolButton,QMenu
+from qgis.PyQt.QtCore import QSize, QSettings, QTranslator, QCoreApplication, QUrl, QFileInfo, Qt, QByteArray, QBuffer, QIODevice
+from qgis.PyQt.QtGui import QIcon, QImage, QPainter, QRegion, QBitmap, QPixmap, QDesktopServices
+from qgis.PyQt.QtWidgets import QAction, QFileDialog, QToolButton, QMenu, QLabel, QSizePolicy
 
 from PyQt5.Qsci import QsciScintilla, QsciLexerHTML, QsciLexerMarkdown
 
 from qgis.gui import QgsMapCanvas
 from qgis.core import (
+    Qgis,
     QgsMapRendererJob,
     QgsWkbTypes,
     QgsMapLayerType,
@@ -266,5 +267,12 @@ class reportWizard:
         dialog.show()
         dialog.exec_()
         results = dialog.results()
+        link = QLabel()
+        print (results)
+        link.setText('<strong>Report wizard: </strong><a href="{OUTPUT}">{OUTPUT}</a>'.format(**results))
+        link.linkActivated.connect(lambda path: QDesktopServices.openUrl(QUrl.fromLocalFile(path)))        
+        link.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
+        item = self.iface.messageBar().pushWidget(link, Qgis.Success, 50)
+        item.widget().setAlignment(Qt.AlignLeft)
         dialog.close()
         print("results", results)
