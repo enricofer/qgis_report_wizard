@@ -58,11 +58,11 @@ class MarkdownGeneratorAlgorithm(QgsProcessingAlgorithm):
         super(OdtGeneratorAlgorithm, self).__init__(*args,**kwargs)
 
     def initAlgorithm(self, config):
-        self.addParameter(QgsProcessingParameterFile(self.TEMPLATE, 'Markdown template', defaultValue=None))
+        self.addParameter(QgsProcessingParameterFile(self.TEMPLATE, 'Markdown template', extension="*md", defaultValue=None))
         self.addParameter(QgsProcessingParameterVectorLayer(self.VECTOR_LAYER, 'Vector Layer that drive feature rendering', types=[QgsProcessing.TypeVectorAnyGeometry], optional=True))
         self.addParameter(QgsProcessingParameterNumber(self.LIMIT, 'Limit features rendering amount', defaultValue=100)) 
         self.addParameter(QgsProcessingParameterBoolean(self.EMBED_IMAGES, 'Base64 Encode and Embed images in markdown document', defaultValue=False))
-        self.addParameter(QgsProcessingParameterFileDestination(self.OUTPUT, 'Markdown rendered output file', fileFilter="*.odt"))
+        self.addParameter(QgsProcessingParameterFileDestination(self.OUTPUT, 'Markdown rendered output file', fileFilter="*.md"))
 
     def processAlgorithm(self, parameters, context, feedback):
         """

@@ -56,7 +56,7 @@ class OdtGeneratorAlgorithm(QgsProcessingAlgorithm):
         super(OdtGeneratorAlgorithm, self).__init__(*args,**kwargs)
 
     def initAlgorithm(self, config):
-        self.addParameter(QgsProcessingParameterFile(self.TEMPLATE, 'ODT template', defaultValue=None))
+        self.addParameter(QgsProcessingParameterFile(self.TEMPLATE, 'ODT template', extension="odt", defaultValue=None))
         self.addParameter(QgsProcessingParameterVectorLayer(self.VECTOR_LAYER, 'Vector Layer that drive feature rendering', types=[QgsProcessing.TypeVectorAnyGeometry], optional=True))
         self.addParameter(QgsProcessingParameterNumber(self.LIMIT, 'Limit features rendered amount', defaultValue=100)) 
         self.addParameter(QgsProcessingParameterFileDestination(self.OUTPUT, 'ODT rendered output file', fileFilter="*.odt"))
