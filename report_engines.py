@@ -66,7 +66,8 @@ def layout_export(value,image_metadata,img_size,as_is=None):
     res = exporter.renderPageToImage(0, QSize(img_size["width"] ,img_size["height"]), img_size["dpi"])
     return res
 
-class markdown_renderer(abstact_report_engine):
+
+class hypertext_renderer(abstact_report_engine):
 
     def export_canvas_image(self,box,width,height,theme,img_path,around_border):
         if around_border:
@@ -149,12 +150,18 @@ class markdown_renderer(abstact_report_engine):
                         path, img_name = os.path.split(res)
                         return img_name 
                 else:
-                    self.report_exception ("md image export: Can't export layout.")
+                    self.report_exception ("hypertext image export: Can't export layout.",level="warning")
 
             else:
-                self.report_exception ("md image export: Can't export image. Item must be globals, feature, layer or layout.",item=value)
+                self.report_exception ("hypertext image export: Can't export image. Item must be globals, feature, layer or layout.",item=value,level="warning")
 
     def render(self,template,target,embed_images=False):
+
+        textchars = bytearray({7,8,9,10,12,13,27} | set(range(0x20, 0x100)) - {0x7f})
+        is_binary_string = lambda bytes: bool(bytes.translate(None, textchars))
+        if is_binary_string(open(template, 'rb').read(1024)):
+            self.report_exception ("hypertext report: Can't process bynary templates")
+
         template_path,template_filename = os.path.split(template)
         loader = FileSystemLoader(template_path)
         env = Environment(
@@ -190,7 +197,7 @@ class markdown_renderer(abstact_report_engine):
 
             zip.close()
 
-        self.report_exception("Markdown document exported",target=target,level="Info")
+        self.report_exception("Hypertext document exported",target=target,level="Info")
         return target
                 
 class odt_renderer(abstact_report_engine):

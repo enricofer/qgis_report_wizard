@@ -37,7 +37,7 @@ from qgis.PyQt.QtGui import (
 
 from qgis.core import QgsProcessingProvider
 from .odt_report_alg import OdtGeneratorAlgorithm
-from .md_report_alg import MarkdownGeneratorAlgorithm
+from .hypertext_report_alg import HypertextGeneratorAlgorithm
 
 import os
 
@@ -62,7 +62,7 @@ class ReportWizardProvider(QgsProcessingProvider):
         Loads all algorithms belonging to this provider.
         """
         self.addAlgorithm(OdtGeneratorAlgorithm())
-        self.addAlgorithm(MarkdownGeneratorAlgorithm())
+        self.addAlgorithm(HypertextGeneratorAlgorithm())
         # add additional algorithms here
         # self.addAlgorithm(MyOtherAlgorithm())
 

@@ -174,11 +174,11 @@ For Any template object, globals, layers features and print layouts, a image fil
 
 The odt template has to follow [secretary module](https://github.com/christopher-ramirez/secretary) guidelines. Basically jinja2 template tags have to to embedded in Libreoffice Writer document as visual user defined fields (CTRL + F2), otherwise encoding issue could happen.  A set of sample odt templates can be found in tmpl directory within plugin homedir.
 
-![](tmpl/rwl1.png)
+![](support/rwl1.png)
 
 Images are included in ODT document in a slightly different way, A placeholder image has to be placed in the desired size and position and the image filtered tag has to be placed in the "name" field under "Options" tab of Libreoffice image properties dialog. 
 
-![](tmpl/rwl2.png)
+![](support/rwl2.png)
 
 The odt template engine will replace the placeholder image with the new rendered on-the-fly image following the image filtered tag:
 

@@ -42,9 +42,9 @@ from qgis.core import (
 
 import os
 
-from .report_engines import markdown_renderer
+from .report_engines import hypertext_renderer
 
-class MarkdownGeneratorAlgorithm(QgsProcessingAlgorithm):
+class HypertextGeneratorAlgorithm(QgsProcessingAlgorithm):
 
     TEMPLATE = "TEMPLATE"
     VECTOR_LAYER = "VECTOR_LAYER"
@@ -55,14 +55,14 @@ class MarkdownGeneratorAlgorithm(QgsProcessingAlgorithm):
     def init__(self, *args,**kwargs):
         print (kwargs)
         self.iface = kwargs.pop("iface")
-        super(OdtGeneratorAlgorithm, self).__init__(*args,**kwargs)
+        super(HypertextGeneratorAlgorithm, self).__init__(*args,**kwargs)
 
     def initAlgorithm(self, config):
-        self.addParameter(QgsProcessingParameterFile(self.TEMPLATE, 'Markdown template', extension="*md", defaultValue=None))
+        self.addParameter(QgsProcessingParameterFile(self.TEMPLATE, 'Text template (html, xml, markdown, txt)', defaultValue=None))
         self.addParameter(QgsProcessingParameterVectorLayer(self.VECTOR_LAYER, 'Vector Layer that drive feature rendering', types=[QgsProcessing.TypeVectorAnyGeometry], optional=True))
         self.addParameter(QgsProcessingParameterNumber(self.LIMIT, 'Limit features rendering amount', defaultValue=100)) 
         self.addParameter(QgsProcessingParameterBoolean(self.EMBED_IMAGES, 'Base64 Encode and Embed images in markdown document', defaultValue=False))
-        self.addParameter(QgsProcessingParameterFileDestination(self.OUTPUT, 'Markdown rendered output file', fileFilter="*.md"))
+        self.addParameter(QgsProcessingParameterFileDestination(self.OUTPUT, 'Rendered output text file'))
 
     def processAlgorithm(self, parameters, context, feedback):
         """
@@ -74,12 +74,14 @@ class MarkdownGeneratorAlgorithm(QgsProcessingAlgorithm):
         target = self.parameterAsFileOutput(parameters, self.OUTPUT, context)
         embed_images = self.parameterAsBoolean(parameters, self.EMBED_IMAGES, context)
 
-        if not target.endswith('.md'):
+        template_path,template_ext = os.path.splitext(template)
+
+        if not target.endswith(template_ext):
             targetpath,extension = os.path.splitext(target)
-            target = targetpath + ".md"
+            target = targetpath + template_ext
 
         iface = self.provider().iface
-        engine = markdown_renderer(iface, vector_layer, feature_limit)
+        engine = hypertext_renderer(iface, vector_layer, feature_limit)
         result = engine.render(template, target, embed_images)
 
         return {
@@ -87,14 +89,14 @@ class MarkdownGeneratorAlgorithm(QgsProcessingAlgorithm):
         }
 
     def name(self):
-        return 'md_report'
+        return 'hypertext_report'
 
     def displayName(self):
         """
         Returns the translated algorithm name, which should be used for any
         user-visible display of the algorithm name.
         """
-        return 'Markdown generator'
+        return 'Hypertext report generator'
 
     def group(self):
         """
@@ -114,4 +116,4 @@ class MarkdownGeneratorAlgorithm(QgsProcessingAlgorithm):
         return 'report_wizard'
 
     def createInstance(self):
-        return MarkdownGeneratorAlgorithm()
+        return HypertextGeneratorAlgorithm()

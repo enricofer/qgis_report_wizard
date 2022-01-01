@@ -222,16 +222,16 @@ class reportWizard:
         sub_actions = [
             {
                 "text":"Odt report generator",
-                "icon_path":os.path.join(self.plugin_dir, 'icon_odt.png'),
+                "icon_path":os.path.join(self.plugin_dir, 'support', 'icon_odt.png'),
                 "args": ["report_wizard:odt_report", alg_params],
                 "callback": self.run_alg,
                 "parent": self.iface.mainWindow(),
                 "toolbutton": self.toolButton,
             },
             {
-                "text":"Markdown report generator",
-                "icon_path":os.path.join(self.plugin_dir, 'icon_md.png'),
-                "args": ["report_wizard:md_report", alg_params],
+                "text":"Hypertext report generator",
+                "icon_path":os.path.join(self.plugin_dir, 'support', 'icon_md.png'),
+                "args": ["report_wizard:hypertext_report", alg_params],
                 "callback": self.run_alg,
                 "parent": self.iface.mainWindow(),
                 "toolbutton": self.toolButton,
@@ -269,10 +269,11 @@ class reportWizard:
         results = dialog.results()
         link = QLabel()
         print (results)
-        link.setText('<strong>Report wizard: </strong><a href="{OUTPUT}">{OUTPUT}</a>'.format(**results))
-        link.linkActivated.connect(lambda path: QDesktopServices.openUrl(QUrl.fromLocalFile(path)))        
-        link.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
-        item = self.iface.messageBar().pushWidget(link, Qgis.Success, 50)
-        item.widget().setAlignment(Qt.AlignLeft)
-        dialog.close()
+        if "OUTPUT" in results.keys():
+            link.setText('<strong>Report wizard: </strong><a href="{OUTPUT}">{OUTPUT}</a>'.format(**results))
+            link.linkActivated.connect(lambda path: QDesktopServices.openUrl(QUrl.fromLocalFile(path)))        
+            link.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
+            item = self.iface.messageBar().pushWidget(link, Qgis.Success, 50)
+            item.widget().setAlignment(Qt.AlignLeft)
+            dialog.close()
         print("results", results)
