@@ -53,6 +53,7 @@ def layout_export(value,image_metadata,img_size,as_is=None):
     manager = QgsProject.instance().layoutManager()
     layout = manager.layoutByName(image_metadata[1])
     if image_metadata[0] == 'atlas': # is atlas
+        layout.atlas().beginRender()
         layout.atlas().seekTo(image_metadata[2])
         layout.atlas().refreshCurrentFeature()
     exporter = QgsLayoutExporter(layout)
@@ -97,7 +98,7 @@ class hypertext_renderer(abstact_report_engine):
         else:
             return "Image not found"
 
-    def image_render(self, value,width=300,height=300,dpi=200,atlas=None,theme=None,around_border=0.1,mimetype="image/png",filter=None,**kwargs):
+    def image_render(self, value,width=300,height=300,dpi=200,extent=None,atlas=None,theme=None,around_border=0.1,mimetype="image/png",filter=None,**kwargs):
 
         img_temppath = tempfile.NamedTemporaryFile(suffix=".png",delete=False,dir=self.tempdir).name
 
@@ -107,12 +108,13 @@ class hypertext_renderer(abstact_report_engine):
         elif isinstance(value,dict) and "image" in value.keys():
 
             if atlas:
-                image_metadata = ["atlas",atlas]
+                image_metadata = value["image"].split(":")
+                image_metadata = ["atlas",image_metadata[1],atlas]
             else:
                 image_metadata = value["image"].split(":")
 
             if image_metadata[0] == 'canvas':
-                view_box = self.iface.mapCanvas().extent()
+                view_box = extent or self.iface.mapCanvas().extent()
                 return self.export_canvas_image(view_box, width, height, theme, img_temppath if not self.embed_images else None, around_border)
 
             elif image_metadata[0] == 'feature':
@@ -132,7 +134,7 @@ class hypertext_renderer(abstact_report_engine):
                 
             elif image_metadata[0] == 'layer':
                 layer = QgsProject.instance().mapLayer(image_metadata[1])
-                view_box = layer.extent()
+                view_box = extent or layer.extent()
                 return self.export_canvas_image(view_box, width, height, theme or layer, img_temppath if not self.embed_images else None, around_border)
                 
             elif image_metadata[0] in ('layout', 'atlas'):
@@ -147,7 +149,7 @@ class hypertext_renderer(abstact_report_engine):
                         return self.exporter.img2base64(res)
                     else:
                         res.save(img_temppath)
-                        path, img_name = os.path.split(res)
+                        path, img_name = os.path.split(img_temppath)
                         return img_name 
                 else:
                     self.report_exception ("hypertext image export: Can't export layout.",level="warning")
