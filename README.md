@@ -1,5 +1,7 @@
 # QGIS report wizard
 
+[![Test plugin](https://github.com/enricofer/qgis_report_wizard/actions/workflows/docker-image.yml/badge.svg)](https://github.com/enricofer/qgis_report_wizard/actions/workflows/docker-image.yml)
+
 The plugin makes use of python templating libraries for creating reports from data within current QGIS project in the following formats:
 
 - ODT
