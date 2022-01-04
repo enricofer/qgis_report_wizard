@@ -2,9 +2,6 @@ name: Test plugin
 
 on:
   push:
-    paths:
-    - "**"
-    - ".github/workflows/test_plugin.yaml"
     paths-ignore:
     - "README.md"
   pull_request:
