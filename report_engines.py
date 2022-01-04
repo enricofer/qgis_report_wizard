@@ -53,7 +53,7 @@ def layout_export(value,image_metadata,img_size,as_is=None):
     manager = QgsProject.instance().layoutManager()
     layout = manager.layoutByName(image_metadata[1])
     if image_metadata[0] == 'atlas': # is atlas
-        layout.atlas().seekTo(value['id'])
+        layout.atlas().seekTo(image_metadata[2])
         layout.atlas().refreshCurrentFeature()
     exporter = QgsLayoutExporter(layout)
     aspect_ratio = layout.pageCollection().page(0).pageSize().width()/layout.pageCollection().page(0).pageSize().height()
@@ -284,7 +284,8 @@ class odt_renderer(abstact_report_engine):
                         return bb
 
                 if atlas:
-                    image_metadata = ["atlas",atlas]
+                    image_metadata = value["image"].split(":")
+                    image_metadata = ["atlas",image_metadata[1],atlas]
                 else:
                     image_metadata = value["image"].split(":")
                 if not 'svg:width' in kwargs['frame_attrs']:
