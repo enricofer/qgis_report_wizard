@@ -272,7 +272,7 @@ class reportWizard:
         if "OUTPUT" in results.keys():
             link.setText('<strong>Report wizard: </strong><a href="{OUTPUT}">{OUTPUT}</a>'.format(**results))
             link.linkActivated.connect(lambda path: QDesktopServices.openUrl(QUrl.fromLocalFile(path)))        
-            link.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
+            link.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.Maximum)
             item = self.iface.messageBar().pushWidget(link, Qgis.Success, 50)
             item.widget().setAlignment(Qt.AlignLeft)
             dialog.close()
