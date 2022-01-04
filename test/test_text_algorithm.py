@@ -46,8 +46,15 @@ templates_path = os.path.join(
 class TextAlgorithmTest(unittest.TestCase):
     """Test odt algorithm construction."""
 
-    def __init__(self, *args, **kwargs):
+    def init__(self, *args, **kwargs):
         super(TextAlgorithmTest, self).__init__(*args, **kwargs)
+        self.project = QgsProject(PARENT)
+        self.canvas = CANVAS
+        CANVAS.setProject(self.project)
+        self.loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
+        self.vector_driver = self.project.mapLayersByName("testdata")[0]
+
+    def setup(self):
         self.project = QgsProject(PARENT)
         self.canvas = CANVAS
         CANVAS.setProject(self.project)
@@ -76,6 +83,9 @@ class TextAlgorithmTest(unittest.TestCase):
         self.assertEqual(embed_param.type(), 'boolean')
         vector_output = alg.outputDefinition('OUTPUT')
         self.assertEqual(vector_output.type(), 'outputFile')
+
+    def testcheckprojectLoaded(self): 
+        self.assertEqual(self.project.count(), 5)
 
     def testRunTxtProjectAlg(self): 
         params = {
