@@ -46,27 +46,6 @@ templates_path = os.path.join(
 class AlgorithmTest(unittest.TestCase):
     """Test odt algorithm construction."""
 
-    def testSetupOdtAlg(self):  # pylint: disable=too-many-locals,too-many-statements
-        """
-        Test alg setup
-        """
-        alg = OdtGeneratorAlgorithm()
-        alg.setInterface(IFACE)
-        alg.initAlgorithm()
-        self.assertEqual(alg.name(), 'odt_report')
-        self.assertEqual(alg.displayName(), 'Odt generator')
-        #self.assertIn('test_algorithm_1.rsx', 'test_algorithm_1.rsx')
-
-        # test that inputs were created correctly
-        template_param = alg.parameterDefinition('TEMPLATE')
-        self.assertEqual(template_param.type(), 'file')
-        vector_param = alg.parameterDefinition('VECTOR_LAYER')
-        self.assertEqual(vector_param.type(), 'vector')
-        limit_param = alg.parameterDefinition('LIMIT')
-        self.assertEqual(limit_param.type(), 'number')
-        vector_output = alg.outputDefinition('OUTPUT')
-        self.assertEqual(vector_output.type(), 'outputFile')
-
     def testSetupHypertextAlg(self):  # pylint: disable=too-many-locals,too-many-statements
         """
         Test alg setup
@@ -89,21 +68,6 @@ class AlgorithmTest(unittest.TestCase):
         self.assertEqual(embed_param.type(), 'boolean')
         vector_output = alg.outputDefinition('OUTPUT')
         self.assertEqual(vector_output.type(), 'outputFile')
-
-    def testRunOdtAlg(self): 
-        
-        project = QgsProject(PARENT)
-        CANVAS.setProject(project)
-        result1 = project.read(os.path.join(os.path.dirname(__file__),"templates","sample_prj.qgs"))
-        self.assertEqual(result1, True)
-
-        params = {
-            "TEMPLATE": os.path.join(os.path.dirname(__file__),"templates","my_awesome_project.odt"),
-            "OUTPUT": "/tmp/test.odt"
-        }
-
-        result2 = processing.run('report_wizard:odt_report', params)
-        self.assertEqual(result2["OUTPUT"], "/tmp/test.odt")
 
     def testRunHypertextAlg(self): 
         
