@@ -93,6 +93,7 @@ class abstact_report_engine:
                 "name": bookmark.name(),
                 "id": bookmark.id(),
                 "extent": bookmark.extent(),
+                "is_user_bookmark": True if QgsApplication.instance().bookmarkManager().bookmarkById(bookmark.id()).name() != '' else False,
                 "bbox": [
                     bookmark.extent().xMinimum(),
                     bookmark.extent().yMinimum(),
@@ -101,7 +102,7 @@ class abstact_report_engine:
                 ]
             }
             self.environment["globals"]["bookmarks"][bookmark.name()] = bk_def
-        
+            
         self.environment["layers"] = []
         for layername,layer in QgsProject.instance().mapLayers().items():
 
