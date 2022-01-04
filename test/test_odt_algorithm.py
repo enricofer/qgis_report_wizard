@@ -51,7 +51,7 @@ class OdtAlgorithmTest(unittest.TestCase):
         self.project = QgsProject(PARENT)
         self.canvas = CANVAS
         CANVAS.setProject(self.project)
-        self.loadedProject = self.project.read(templates_path,"sample_prj.qgs")
+        self.loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
     
     def testIfTestProjectLoaded(self):
         self.assertEqual(self.loadedProject, True)
