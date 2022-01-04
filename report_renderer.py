@@ -102,7 +102,7 @@ class abstact_report_engine:
                 ]
             }
             self.environment["globals"]["bookmarks"][bookmark.name()] = bk_def
-            
+
         self.environment["layers"] = []
         for layername,layer in QgsProject.instance().mapLayers().items():
 
@@ -329,28 +329,26 @@ class canvas_image_exporter:
 
     def __init__(self, main_canvas):
         self.main_canvas = main_canvas
-        self.canvas = QgsMapCanvas()
-        self.canvas.setCanvasColor(Qt.white)
-        self.canvas.setLayers(self.main_canvas.mapSettings().layers())
-        self.canvas.setDestinationCrs(self.main_canvas.project().crs())
-        self.canvas.refresh()
-        self.canvas.update()
-        self.settings = self.main_canvas.mapSettings()
 
     def image_shot(self, extent, xsize, ysize,theme):
         #self.canvas.resize(xsize,ysize) #QSize(xsize,ysize)
+        canvas = QgsMapCanvas()
+        canvas.setCanvasColor(Qt.white)
+        canvas.setLayers(self.main_canvas.mapSettings().layers())
+        canvas.setDestinationCrs(self.main_canvas.project().crs())
         if theme:
             if isinstance(theme, str):
-                self.canvas.setTheme(theme)
+                canvas.setTheme(theme)
             elif issubclass(type(theme),QgsMapLayer):
-                self.canvas.setLayers([theme])
+                canvas.setLayers([theme])
             else:
-                self.canvas.setLayers(self.main_canvas.layers())
+                canvas.setTheme("")
+                canvas.setLayers(self.main_canvas.layers())
         
-        self.canvas.setExtent(extent)
-        self.canvas.refresh()
-        self.canvas.update()
-        mapSettings = self.canvas.mapSettings()
+        canvas.setExtent(extent)
+        canvas.refresh()
+        canvas.update()
+        mapSettings = canvas.mapSettings()
         mapSettings.setOutputSize( QSize(xsize,ysize ) )
         job = QgsMapRendererParallelJob(mapSettings)
         job.start()
