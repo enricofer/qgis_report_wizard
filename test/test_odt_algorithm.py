@@ -52,6 +52,7 @@ class OdtAlgorithmTest(unittest.TestCase):
         self.canvas = CANVAS
         CANVAS.setProject(self.project)
         self.loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
+        self.vector_driver = self.project.mapLayersByName("testdata")[0]
     
     def testIfTestProjectLoaded(self):
         self.assertEqual(self.loadedProject, True)
@@ -120,6 +121,7 @@ class OdtAlgorithmTest(unittest.TestCase):
     def testRunFeaturesAlg(self): 
         params = {
             "TEMPLATE": os.path.join(templates_path, "tab_feats.odt"),
+            "VECTOR_LAYER": self.vector_driver,
             "OUTPUT": "/tmp/test.odt"
         }
         result = processing.run('report_wizard:odt_report', params)
@@ -128,6 +130,7 @@ class OdtAlgorithmTest(unittest.TestCase):
     def testRunFeaturesWithPicsAlg(self): 
         params = {
             "TEMPLATE": os.path.join(templates_path, "tab_feats_pics.odt"),
+            "VECTOR_LAYER": self.vector_driver,
             "OUTPUT": "/tmp/test.odt"
         }
         result = processing.run('report_wizard:odt_report', params)

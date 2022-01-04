@@ -52,6 +52,7 @@ class TextAlgorithmTest(unittest.TestCase):
         self.canvas = CANVAS
         CANVAS.setProject(self.project)
         self.loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
+        self.vector_driver = self.project.mapLayersByName("testdata")[0]
 
     def testSetupHypertextAlg(self):  # pylint: disable=too-many-locals,too-many-statements
         """
@@ -145,6 +146,7 @@ class TextAlgorithmTest(unittest.TestCase):
     def testRunTxtFeaturesAlg(self): 
         params = {
             "TEMPLATE": os.path.join(templates_path, "tab_feats.md"),
+            "VECTOR_LAYER": self.vector_driver,
             "OUTPUT": "/tmp/test.odt"
         }
         result = processing.run('report_wizard:hypertext_report', params)
@@ -156,6 +158,7 @@ class TextAlgorithmTest(unittest.TestCase):
     def testRunTxtFeaturesWithPicsAlg(self): 
         params = {
             "TEMPLATE": os.path.join(templates_path, "tab_feats_pics.md"),
+            "VECTOR_LAYER": self.vector_driver,
             "OUTPUT": "/tmp/test.odt"
         }
         result = processing.run('report_wizard:hypertext_report', params)
