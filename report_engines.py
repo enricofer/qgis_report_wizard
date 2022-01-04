@@ -332,7 +332,7 @@ class odt_renderer(abstact_report_engine):
                 else:
                     self.report_exception ("odt image export: Can't export image. Item must be globals, feature, layer or layout.",item=value)
             else:
-                self.report_exception("Can't generate image from object", obj=value)
+                self.report_exception("Can't generate image from object", obj=value, level="Warning")
                 
             return (open(img_temppath, 'rb'), mimetype)
                 

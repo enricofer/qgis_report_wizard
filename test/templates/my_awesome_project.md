@@ -6,11 +6,8 @@
 ### BUT YOU CAN CAN GET IT AT A SPECIFIED SCALE (1:10000):
 ![]( {{ globals|image(400,400,scale_denominator=10000) }} )
 
-### OR AT THE PROJECT EXTENT:
-![]( {{ globals|image(800,800,dpi=600,box=globals.mapCanvas.projectExtent()) }} )
-
 ### OR FOR A SPECIFIED LOCATION AND SCALE (5000):
-![]( {{ globals|image(800,400,scale_denominator=5000,center=globals.mapCanvas.projectExtent().center() ) }} )
+![]( {{ globals|image(800,400,scale_denominator=5000,center=globals.mapCanvas.extent().center() ) }} )
 
 The plugin provides to the template four variables populated with data from current project and related elements:
 - `globals` 	information about project and current visualization on map canvas
@@ -29,7 +26,7 @@ in the global variable are loaded general informations about the current project
 | `project`   | The [QgsProject](https://qgis.org/pyqgis/3.0/core/Project/QgsProject.html) object instance | {% raw %}`{{globals.project }}`{% endraw %}  | {{ globals.project }}<br/>{{ globals.project.baseName() }}             |
 | `mapCanvas` | The [QgsMapCanvas](https://qgis.org/pyqgis/3.2/gui/Map/QgsMapCanvas.html) object instance | {% raw %}`{{globals.mapCanvas}}`{% endraw %} | {{ globals.mapCanvas }}<br />{{ globals.mapCanvas.layerCount() }}<br />{{ globals.mapCanvas.scale() }} |
 | `vars`      | A dictionary with the current global variables               | {% raw %}`{{globals.vars}}`{% endraw %}      | {{ globals.vars }}                                           |
-| `box`       | An array with the current map canvas extent [xmin,ymin,xmax,ymax] | {% raw %}`{{globals.box}}`{% endraw %}       | {{ globals.box}}                                             |
+| `bbox`       | An array with the current map canvas extent [xmin,ymin,xmax,ymax] | {% raw %}`{{globals.bbox}}`{% endraw %}       | {{ globals.box}}                                             |
 | `themes`    | A list of user defined legend themes                         | {% raw %}`{{globals.themes}}`{% endraw %}    |                                                              |
 | `bookmarks` | A list of user defined and project bookmarks                 | {% raw %}`{{globals.bookmarks}}`{% endraw %} | {{ globals.bookmarks }}                                      |
 | ....        | Other information can be retrieved accessing project and mapCanvas objects |                                              |                                                              |

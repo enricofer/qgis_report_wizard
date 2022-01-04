@@ -1,0 +1,50 @@
+name: Test plugin
+
+on:
+  push:
+    paths:
+    - "**"
+    - ".github/workflows/test_plugin.yaml"
+  pull_request:
+    types: [opened, synchronize, edited]
+
+env:
+  # plugin name/directory where the code for the plugin is stored
+  PLUGIN_NAME: qgis_report_wizard
+  # python notation to test running inside plugin
+  TESTS_RUN_FUNCTION: qgis_report_wizard.test_suite.test_package
+  # Docker settings
+  DOCKER_IMAGE: qgis/qgis
+
+
+jobs:
+
+  Test-plugin-report_wizard:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        docker_tags: [release-3_16, release-3_18, release-3_20, latest]
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Docker pull and create qgis-testing-environment
+        run: |
+          docker pull "$DOCKER_IMAGE":${{ matrix.docker_tags }}
+          docker run -d --name qgis-testing-environment -v "$GITHUB_WORKSPACE":/tests_directory -e DISPLAY=:99 "$DOCKER_IMAGE":${{ matrix.docker_tags }}
+      - name: Docker set up QGIS
+        run: |
+          docker exec qgis-testing-environment sh -c "mkdir /$PLUGIN_NAME" 
+          docker exec qgis-testing-environment sh -c "cp -R /tests_directory/* /$PLUGIN_NAME" 
+          docker exec qgis-testing-environment sh -c "mv  /$PLUGIN_NAME /tests_directory/" 
+          docker exec qgis-testing-environment sh -c "qgis_setup.sh $PLUGIN_NAME" 
+          docker exec qgis-testing-environment sh -c "rm -f /root/.local/share/QGIS/QGIS3/profiles/default/python/plugins/$PLUGIN_NAME"
+          docker exec qgis-testing-environment sh -c "ln -s /tests_directory/$PLUGIN_NAME /root/.local/share/QGIS/QGIS3/profiles/default/python/plugins/$PLUGIN_NAME"
+          docker exec qgis-testing-environment sh -c "ps aux | grep 'qgis'"
+      - name: Docker run plugin tests
+        run: |
+          docker exec qgis-testing-environment sh -c "qgis_testrunner.sh $TESTS_RUN_FUNCTION"

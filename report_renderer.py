@@ -22,7 +22,6 @@
  ***************************************************************************/
 """
 
-from typing import OrderedDict
 from qgis.PyQt.QtCore import QSize, Qt, QByteArray, QBuffer, QIODevice
 from qgis.PyQt.QtGui import QImage, QPainter, QColor
 
@@ -191,7 +190,7 @@ class abstact_report_engine:
                     try:
                         attributes[field.name()] = feat[field.name()].toPyObject()[0]
                     except:
-                        attributes[field.name()] = feat[field.name()]
+                        attributes[field.name()] = str(feat[field.name()])
                 f_dict["attributes"] = attributes
                 gj["properties"] = attributes
                 f_dict["geojson"] = json.dumps(gj)
@@ -262,7 +261,7 @@ class abstact_report_engine:
                     mimetype = response.headers['content-type']
                     bin_data = response.content
                 else:
-                    self.report_exception ("url_image export: Http transfer error",status=response.status_code,url=url,level="warning")
+                    self.report_exception ("url_image export: Http transfer error",status=response.status_code,url=url,level="Warning")
                     return
             elif scheme == 'file':
                 url = urlcomp.path
@@ -270,10 +269,10 @@ class abstact_report_engine:
                     mimetype = mimetypes.MimeTypes().guess_type(url)[0]
                     bin_data = open(url,"rb").read()
                 else:
-                    self.report_exception ("url_image export: local path not found",path=urlcomp.netloc,urlcomp=str(urlcomp),level="warning")
+                    self.report_exception ("url_image export: local path not found",path=urlcomp.netloc,urlcomp=str(urlcomp),level="Warning")
                     
             else:
-                self.report_exception ("url_image export:Unknown resource protocol",scheme=urlcomp.scheme,level="warning")
+                self.report_exception ("url_image export:Unknown resource protocol",scheme=urlcomp.scheme,level="Warning")
                 return
 
             img = QImage()
@@ -317,7 +316,7 @@ class abstact_report_engine:
             if mimetype in ("image/png", "image/jpeg"):
                 return target_img
             else:
-                self.report_exception ("url_image export: wrong resource mimetype. must be png or jpeg image",mimetype=mimetype,level="warning")
+                self.report_exception ("url_image export: wrong resource mimetype. must be png or jpeg image",mimetype=mimetype,level="Warning")
                 return
         else:
             self.report_exception ("url_image export: URL is not string",argtype=str(type(url)),level="warning")

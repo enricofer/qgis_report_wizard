@@ -56,8 +56,11 @@ class HypertextGeneratorAlgorithm(QgsProcessingAlgorithm):
         print (kwargs)
         self.iface = kwargs.pop("iface")
         super(HypertextGeneratorAlgorithm, self).__init__(*args,**kwargs)
+    
+    def setInterface(self, iface):
+        self.iface = iface
 
-    def initAlgorithm(self, config):
+    def initAlgorithm(self, config=None):
         self.addParameter(QgsProcessingParameterFile(self.TEMPLATE, 'Text template (html, xml, markdown, txt)', defaultValue=None))
         self.addParameter(QgsProcessingParameterVectorLayer(self.VECTOR_LAYER, 'Vector Layer that drive feature rendering', types=[QgsProcessing.TypeVectorAnyGeometry], optional=True))
         self.addParameter(QgsProcessingParameterNumber(self.LIMIT, 'Limit features rendering amount', defaultValue=100)) 
