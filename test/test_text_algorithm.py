@@ -43,8 +43,15 @@ templates_path = os.path.join(
     'templates')
 
 
-class AlgorithmTest(unittest.TestCase):
+class TextAlgorithmTest(unittest.TestCase):
     """Test odt algorithm construction."""
+
+    def __init__(self, *args, **kwargs):
+        super(TextAlgorithmTest, self).__init__(*args, **kwargs)
+        self.project = QgsProject(PARENT)
+        self.canvas = CANVAS
+        CANVAS.setProject(self.project)
+        self.loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
 
     def testSetupHypertextAlg(self):  # pylint: disable=too-many-locals,too-many-statements
         """
@@ -69,33 +76,96 @@ class AlgorithmTest(unittest.TestCase):
         vector_output = alg.outputDefinition('OUTPUT')
         self.assertEqual(vector_output.type(), 'outputFile')
 
-    def testRunHypertextAlg(self): 
-        
-        project = QgsProject(PARENT)
-        CANVAS.setProject(project)
-        result1 = project.read(os.path.join(os.path.dirname(__file__),"templates","sample_prj.qgs"))
-        self.assertEqual(result1, True)
-
+    def testRunTxtProjectAlg(self): 
         params = {
-            "TEMPLATE": os.path.join(os.path.dirname(__file__),"templates","my_awesome_project.md"),
-            "OUTPUT": "/tmp/test.md"
+            "TEMPLATE": os.path.join(templates_path, "tab_project.md"),
+            "OUTPUT": "/tmp/test.odt"
         }
+        result = processing.run('report_wizard:hypertext_report', params)
+        self.assertEqual(result["OUTPUT"], "/tmp/test.md.zip")
+        params["EMBED_IMAGES"] = True
+        result = processing.run('report_wizard:hypertext_report', params)
+        self.assertEqual(result["OUTPUT"], "/tmp/test.md")
 
-        result2 = processing.run('report_wizard:hypertext_report', params)
-        self.assertEqual(result2["OUTPUT"], "/tmp/test.md.zip")
-
+    def testRunTxtThemesAlg(self): 
         params = {
-            "TEMPLATE": os.path.join(os.path.dirname(__file__),"templates","my_awesome_project.md"),
-            "EMBED_IMAGES": True,
-            "OUTPUT": "/tmp/test.md"
+            "TEMPLATE": os.path.join(templates_path, "tab_themes.md"),
+            "OUTPUT": "/tmp/test.odt"
         }
+        result = processing.run('report_wizard:hypertext_report', params)
+        self.assertEqual(result["OUTPUT"], "/tmp/test.md.zip")
+        params["EMBED_IMAGES"] = True
+        result = processing.run('report_wizard:hypertext_report', params)
+        self.assertEqual(result["OUTPUT"], "/tmp/test.md")
 
-        result3 = processing.run('report_wizard:hypertext_report', params)
-        self.assertEqual(result3["OUTPUT"], "/tmp/test.md")
+    def testRunTxtBookmarksAlg(self): 
+        params = {
+            "TEMPLATE": os.path.join(templates_path, "tab_bookmarks.md"),
+            "OUTPUT": "/tmp/test.odt"
+        }
+        result = processing.run('report_wizard:hypertext_report', params)
+        self.assertEqual(result["OUTPUT"], "/tmp/test.md.zip")
+        params["EMBED_IMAGES"] = True
+        result = processing.run('report_wizard:hypertext_report', params)
+        self.assertEqual(result["OUTPUT"], "/tmp/test.md")
 
+    def testRunTxtLayoutAlg(self): 
+        params = {
+            "TEMPLATE": os.path.join(templates_path, "tab_layout.md"),
+            "OUTPUT": "/tmp/test.odt"
+        }
+        result = processing.run('report_wizard:hypertext_report', params)
+        self.assertEqual(result["OUTPUT"], "/tmp/test.md.zip")
+        params["EMBED_IMAGES"] = True
+        result = processing.run('report_wizard:hypertext_report', params)
+        self.assertEqual(result["OUTPUT"], "/tmp/test.md")
+
+    def testRunTxtAtlasAlg(self): 
+        params = {
+            "TEMPLATE": os.path.join(templates_path, "tab_atlas.md"),
+            "OUTPUT": "/tmp/test.odt"
+        }
+        result = processing.run('report_wizard:hypertext_report', params)
+        self.assertEqual(result["OUTPUT"], "/tmp/test.md.zip")
+        params["EMBED_IMAGES"] = True
+        result = processing.run('report_wizard:hypertext_report', params)
+        self.assertEqual(result["OUTPUT"], "/tmp/test.md")
+
+    def testRunTxtLayersAlg(self): 
+        params = {
+            "TEMPLATE": os.path.join(templates_path, "tab_layers.md"),
+            "OUTPUT": "/tmp/test.odt"
+        }
+        result = processing.run('report_wizard:hypertext_report', params)
+        self.assertEqual(result["OUTPUT"], "/tmp/test.md.zip")
+        params["EMBED_IMAGES"] = True
+        result = processing.run('report_wizard:hypertext_report', params)
+        self.assertEqual(result["OUTPUT"], "/tmp/test.md")
+
+    def testRunTxtFeaturesAlg(self): 
+        params = {
+            "TEMPLATE": os.path.join(templates_path, "tab_feats.md"),
+            "OUTPUT": "/tmp/test.odt"
+        }
+        result = processing.run('report_wizard:hypertext_report', params)
+        self.assertEqual(result["OUTPUT"], "/tmp/test.md.zip")
+        params["EMBED_IMAGES"] = True
+        result = processing.run('report_wizard:hypertext_report', params)
+        self.assertEqual(result["OUTPUT"], "/tmp/test.md")
+
+    def testRunTxtFeaturesWithPicsAlg(self): 
+        params = {
+            "TEMPLATE": os.path.join(templates_path, "tab_feats_pics.md"),
+            "OUTPUT": "/tmp/test.odt"
+        }
+        result = processing.run('report_wizard:hypertext_report', params)
+        self.assertEqual(result["OUTPUT"], "/tmp/test.md.zip")
+        params["EMBED_IMAGES"] = True
+        result = processing.run('report_wizard:hypertext_report', params)
+        self.assertEqual(result["OUTPUT"], "/tmp/test.md")
 
 
 if __name__ == "__main__":
-    suite = unittest.makeSuite(OdtAlgorithmTest)
+    suite = unittest.makeSuite(TextAlgorithmTest)
     runner = unittest.TextTestRunner(verbosity=2)
     runner.run(suite)
