@@ -85,7 +85,7 @@ class TextAlgorithmTest(unittest.TestCase):
         self.assertEqual(vector_output.type(), 'outputFile')
 
     def testcheckprojectLoaded(self): 
-        self.assertEqual(self.project.count(), 5)
+        self.assertEqual(self.loadedProject.count(), 5)
 
     def testRunTxtProjectAlg(self): 
         params = {
