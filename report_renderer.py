@@ -87,7 +87,7 @@ class abstact_report_engine:
             self.environment["globals"]["vars"][str(k)] =  var_value if isinstance(var_value, str) else str(var_value).replace("\\","/")
         self.environment["globals"]["themes"] = list(QgsProject.instance().mapThemeCollection().mapThemes())
 
-        self.environment["globals"]["bookmarks"] = []
+        self.environment["globals"]["bookmarks"] = {}
         for bookmark in list(QgsProject.instance().bookmarkManager().bookmarks())+list(QgsApplication.instance().bookmarkManager().bookmarks()):
             bk_def = {
                 "name": bookmark.name(),
@@ -100,7 +100,7 @@ class abstact_report_engine:
                     bookmark.extent().yMaximum()
                 ]
             }
-            self.environment["globals"]["bookmarks"].append(bk_def)
+            self.environment["globals"]["bookmarks"][bookmark.name()] = bk_def
         
         self.environment["layers"] = []
         for layername,layer in QgsProject.instance().mapLayers().items():
@@ -153,7 +153,7 @@ class abstact_report_engine:
                 "fields": fields
             })
             
-        self.environment["layouts"] = []
+        self.environment["layouts"] = {}
         for layout in QgsProject.instance().layoutManager().printLayouts():
             layout_def = {
                 "obj": layout,
@@ -162,7 +162,7 @@ class abstact_report_engine:
                 "image": "layout:%s" % layout.name(),
                 "atlas": layout.atlas().coverageLayer()  if layout.atlas().enabled() else None
             }
-            self.environment["layouts"].append (layout_def)
+            self.environment["layouts"][layout.name()] = layout_def
 
         self.environment["features"] = []
 
