@@ -17,25 +17,9 @@ import unittest
 import os
 from qgis.core import (Qgis,
                        QgsApplication,
-                       QgsProject,
-                       QgsProcessingParameterNumber,
-                       QgsProcessingParameterFile,
-                       QgsProcessing,
-                       QgsProcessingContext,
-                       QgsProcessingFeedback,
-                       QgsVectorLayer,
-                       QgsProcessingAlgorithm)
-from qgis.gui import QgsMapCanvas
-from qgis.PyQt.QtCore import (QDateTime, QDate, QTime)
-from qgis.PyQt.QtGui import QColor
-from qgis.PyQt.QtWidgets import QWidget
-from ..odt_report_alg import OdtGeneratorAlgorithm
-from ..hypertext_report_alg import HypertextGeneratorAlgorithm
+                       QgsProject,)
 from .utilities import get_qgis_app
-from .qgis_interface import QgisInterface
 from ..report_engines import hypertext_renderer
-
-import processing
 
 QGISAPP, CANVAS, IFACE, PARENT = get_qgis_app()
 
@@ -50,8 +34,8 @@ class TextEngineTest(unittest.TestCase):
     def setUp(self):
         self.target_md = "/tmp/OUTPUT.md"
         self.target_zip = self.target_md+".zip"
-        if os.path.exists(self.target):
-            os.remove(self.target)
+        if os.path.exists(self.target_md):
+            os.remove(self.target_md)
         if os.path.exists(self.target_zip):
             os.remove(self.target_zip)
 
