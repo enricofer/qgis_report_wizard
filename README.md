@@ -5,7 +5,9 @@
 The plugin makes use of python templating libraries for creating reports from data within current QGIS project in the following formats:
 
 - ODT
-- Markdown
+- Text (html, xml, markdown, json etc...)
+
+A set of sample templates and test data can be found in the [test/templates directory](https://github.com/enricofer/qgis_report_wizard/tree/master/test/templates)
 
 ## python dependencies
 
@@ -174,7 +176,7 @@ For Any template object, globals, layers features and print layouts, a image fil
 
 ## ODT report generation
 
-The odt template has to follow [secretary module](https://github.com/christopher-ramirez/secretary) guidelines. Basically jinja2 template tags have to to embedded in Libreoffice Writer document as visual user defined fields (CTRL + F2), otherwise encoding issue could happen.  A set of sample odt templates can be found in tmpl directory within plugin homedir.
+The odt report algorithm generate a odt output starting from a odt template and optionally a vector layer as reporto driver. The odt template has to follow [secretary module](https://github.com/christopher-ramirez/secretary) guidelines. Basically jinja2 template tags have to to embedded in Libreoffice Writer document as visual user defined fields (CTRL + F2), otherwise encoding issue could happen.  A set of sample odt templates can be found in tmpl directory within plugin homedir.
 
 ![](support/rwl1.png)
 
@@ -188,7 +190,7 @@ The odt template engine will replace the placeholder image with the new rendered
 {{ globals|image() }} {{ feature|image() }} {{ feature.attributes.picture|image() }}
 ```
 
-the image filter have the following optional parameters:
+the odt image filter has the following optional parameters:
 
 | parameter         |                                                              |
 | ----------------- | ------------------------------------------------------------ |
@@ -199,3 +201,17 @@ the image filter have the following optional parameters:
 | theme             | A string indicating a defined map canvas theme of representation |
 | around_border     | A floating number representing the amount of a void border around the output image. This parameter is not considered when scale_denominator is specified (default = 0.1) |
 
+## Hypertext report generation
+
+The Hypertext report Algorithm make use of jinja2 template to generate complex text document output. Any text document can be generated and map images can be included as images files, and in this case the output format will be a zip file that encapsulate the rendered document with the generated images, or encapsulated in text document as [base64 encoded binary data](https://stackoverflow.com/questions/8499633/how-to-display-base64-images-in-html) that can be visualized in modern web browsers.
+
+Odt and Hypertext algorithms basically differ in the image filter that in hypertext report generator has the following optional parameters:
+
+| parameter     |                                                              |
+| ------------- | ------------------------------------------------------------ |
+| width         | A integer number specifying the width in pixel of the image  |
+| height        | A integer number specifying the height in pixel of the image |
+| dpi           | A integer number specifying the output resolution of the image 		(default = 200) |
+| center        | A point [QgsPointXY](https://qgis.org/pyqgis/master/core/QgsPointXY.html) object or a [x,y] coordinate list that specify the center of the map context of the image. To be used in conjunction with scale_denominator |
+| theme         | A string indicating a defined map canvas theme of representation |
+| around_border | A floating number representing the amount of a void border around the output image. This parameter is not considered when scale_denominator is specified (default = 0.1) |
