@@ -85,10 +85,11 @@ class HypertextGeneratorAlgorithm(QgsProcessingAlgorithm):
 
         iface = self.provider().iface
         engine = hypertext_renderer(iface, vector_layer, feature_limit)
-        result = engine.render(template, target, embed_images)
+        output_file, result = engine.render(template, target, embed_images)
 
         return {
-            "OUTPUT": result
+            "OUTPUT": output_file,
+            "TRACE": result
         }
 
     def name(self):

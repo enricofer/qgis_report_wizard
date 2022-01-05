@@ -80,10 +80,30 @@ class TextAlgorithmTest(unittest.TestCase):
         self.assertEqual(vector_output.type(), 'outputFile')
 
     def testcheckprojectLoadedSetup(self):
+        """
+        Test Project Loaded
+        """
         self.assertEqual(self.loadedProject, True)
 
     def testRunTxtLoadedLayer(self): 
+        """
+        Test vector layer Loaded
+        """
         self.assertEqual(self.vector_driver.id(), "testdata_b32cec00_cc85_4d91_adda_cc9ccd29b310")
+
+    def testRunTxtProjectAlg(self):
+        """
+        Test Run Text alg on project template
+        """
+        params = {
+            "TEMPLATE": os.path.join(templates_path, "tab_project.md"),
+            "OUTPUT": "/tmp/test.odt"
+        }
+        result = processing.run('report_wizard:hypertext_report', params)
+        self.assertEqual(result["OUTPUT"], "/tmp/test.md.zip")
+        params["EMBED_IMAGES"] = True
+        result = processing.run('report_wizard:hypertext_report', params)
+        self.assertEqual(result["OUTPUT"], "/tmp/test.md")
 
 if __name__ == "__main__":
     suite = unittest.makeSuite(TextAlgorithmTest)

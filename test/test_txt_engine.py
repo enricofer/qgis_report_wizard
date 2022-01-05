@@ -64,8 +64,18 @@ class TextEngineTest(unittest.TestCase):
         """
         engine = hypertext_renderer(IFACE, self.vector_driver, 100)
         template = os.path.join(templates_path,"tab_project.md")
-        result = engine.render(template,self.target_md,embed_images=False)
-        self.assertEqual(result, self.target_zip)
+        output, result = engine.render(template,self.target_md,embed_images=False)
+        print (result)
+        self.assertEqual(output, self.target_zip)
+
+    def testTxtEngineProjectTemplateEmbedImgs(self):  # pylint: disable=too-many-locals,too-many-statements
+        """
+        Test render project template with embedded imgs
+        """
+        engine = hypertext_renderer(IFACE, self.vector_driver, 100)
+        template = os.path.join(templates_path,"tab_project.md")
+        output, result = engine.render(template,self.target_md,embed_images=True)
+        self.assertEqual(output, self.target_md)
 
     def testTxtEngineLayersTemplate(self):  # pylint: disable=too-many-locals,too-many-statements
         """
@@ -73,8 +83,8 @@ class TextEngineTest(unittest.TestCase):
         """
         engine = hypertext_renderer(IFACE, self.vector_driver, 100)
         template = os.path.join(templates_path,"tab_layers.md")
-        result = engine.render(template,self.target_md,embed_images=False)
-        self.assertEqual(result, self.target_zip)
+        output, result = engine.render(template,self.target_md,embed_images=False)
+        self.assertEqual(output, self.target_zip)
 
     def testTxtEngineFeaturesTemplate(self):  # pylint: disable=too-many-locals,too-many-statements
         """
@@ -82,8 +92,54 @@ class TextEngineTest(unittest.TestCase):
         """
         engine = hypertext_renderer(IFACE, self.vector_driver, 100)
         template = os.path.join(templates_path,"tab_feats.md")
-        result = engine.render(template,self.target_md,embed_images=False)
-        self.assertEqual(result, self.target_zip)
+        output, result = engine.render(template,self.target_md,embed_images=False)
+        self.assertEqual(output, self.target_zip)
+
+    def testTxtEngineFeaturesPicsTemplate(self):  # pylint: disable=too-many-locals,too-many-statements
+        """
+        Test render features template with pictures
+        """
+        engine = hypertext_renderer(IFACE, self.vector_driver, 100)
+        template = os.path.join(templates_path,"tab_feats_pics.md")
+        output, result = engine.render(template,self.target_md,embed_images=False)
+        print (result)
+        self.assertEqual(output, self.target_zip)
+
+    def testTxtEngineLayoutsTemplate(self):  # pylint: disable=too-many-locals,too-many-statements
+        """
+        Test render layouts template
+        """
+        engine = hypertext_renderer(IFACE, self.vector_driver, 100)
+        template = os.path.join(templates_path,"tab_layout.md")
+        output, result = engine.render(template,self.target_md,embed_images=False)
+        self.assertEqual(output, self.target_zip)
+
+    def testTxtEngineAtlasTemplate(self):  # pylint: disable=too-many-locals,too-many-statements
+        """
+        Test render atlas template
+        """
+        engine = hypertext_renderer(IFACE, self.vector_driver, 100)
+        template = os.path.join(templates_path,"tab_atlas.md")
+        output, result = engine.render(template,self.target_md,embed_images=False)
+        self.assertEqual(output, self.target_zip)
+
+    def testTxtEngineLayoutsTemplate(self):  # pylint: disable=too-many-locals,too-many-statements
+        """
+        Test render layouts template with embedded imgs
+        """
+        engine = hypertext_renderer(IFACE, self.vector_driver, 100)
+        template = os.path.join(templates_path,"tab_layout.md")
+        output, result = engine.render(template,self.target_md,embed_images=True)
+        self.assertEqual(output, self.target_md)
+
+    def testTxtEngineAtlasTemplate(self):  # pylint: disable=too-many-locals,too-many-statements
+        """
+        Test render atlas template with embedded imgs
+        """
+        engine = hypertext_renderer(IFACE, self.vector_driver, 100)
+        template = os.path.join(templates_path,"tab_atlas.md")
+        output, result = engine.render(template,self.target_md,embed_images=True)
+        self.assertEqual(output, self.target_md)
 
 
 if __name__ == "__main__":
