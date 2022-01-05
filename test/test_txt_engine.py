@@ -47,7 +47,7 @@ templates_path = os.path.join(
 class TextEngineTest(unittest.TestCase):
     """Test odt algorithm construction."""
 
-    def init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super(TextEngineTest, self).__init__(*args, **kwargs)
         self.project = QgsProject(PARENT)
         CANVAS.setProject(self.project)
@@ -55,7 +55,7 @@ class TextEngineTest(unittest.TestCase):
         self.vector_driver = self.project.mapLayersByName("testdata")[0]
         #self.vector_layer = QgsVectorLayer ("testdata", "%s|layername=testdata" % (os.path.join(templates_path,"testdata.gpkg")), 'ogr')
 
-    def setup(self):
+    def __setup(self):
         self.project = QgsProject(PARENT)
         CANVAS.setProject(self.project)
         self.loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
@@ -65,7 +65,7 @@ class TextEngineTest(unittest.TestCase):
         """
         Test engine setup
         """
-        engine = hypertext_renderer(IFACE, self.vector_layer, 100)
+        engine = hypertext_renderer(IFACE, self.vector_driver, 100)
         self.assertEqual(len(engine.environment), 4)
         self.assertEqual(len(engine.environment["features"]), 6)
 
