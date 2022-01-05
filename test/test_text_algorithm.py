@@ -194,6 +194,7 @@ class TextAlgorithmTest(unittest.TestCase):
         CANVAS.setProject(self.project)
         self.loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
         self.vector_driver = self.project.mapLayersByName("testdata")[0]
+        self.assertEqual(self.vector_driver.id(), "testdata_b32cec00_cc85_4d91_adda_cc9ccd29b310")
         params = {
             "TEMPLATE": os.path.join(templates_path, "tab_feats.md"),
             "VECTOR_LAYER": self.vector_driver,
