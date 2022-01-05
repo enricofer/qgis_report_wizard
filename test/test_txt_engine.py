@@ -54,7 +54,6 @@ class TextEngineTest(unittest.TestCase):
         Test setup text engine
         """
         engine = hypertext_renderer(IFACE, self.vector_driver, 100)
-        print (engine.environment)
         self.assertEqual(len(engine.environment), 4)
         self.assertEqual(len(engine.environment["features"]), 6)
 

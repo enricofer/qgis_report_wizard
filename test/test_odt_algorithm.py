@@ -46,18 +46,8 @@ templates_path = os.path.join(
 class OdtAlgorithmTest(unittest.TestCase):
     """Test odt algorithm construction."""
 
-    def init__(self, *args, **kwargs):
-        super(OdtAlgorithmTest, self).__init__(*args, **kwargs)
-        self.project = QgsProject(PARENT)
-        self.canvas = CANVAS
-        CANVAS.setProject(self.project)
-        self.loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
-        self.vector_driver = self.project.mapLayersByName("testdata")[0]
-
-    def setup(self):
-        self.project = QgsProject(PARENT)
-        self.canvas = CANVAS
-        CANVAS.setProject(self.project)
+    def setUp(self):
+        self.project = QgsProject.instance()
         self.loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
         self.vector_driver = self.project.mapLayersByName("testdata")[0]
 
@@ -67,7 +57,7 @@ class OdtAlgorithmTest(unittest.TestCase):
         CANVAS.setProject(self.project)
         self.loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
         self.vector_driver = self.project.mapLayersByName("testdata")[0]
-        self.assertEqual(self.loadedProject, True)
+        self.assertTrue(self.loadedProject)
 
     def testSetupOdtAlg(self):  # pylint: disable=too-many-locals,too-many-statements
         """
@@ -89,20 +79,6 @@ class OdtAlgorithmTest(unittest.TestCase):
         self.assertEqual(limit_param.type(), 'number')
         vector_output = alg.outputDefinition('OUTPUT')
         self.assertEqual(vector_output.type(), 'outputFile')
-
-    def testRunFeaturesWithPicsAlg(self): 
-        self.project = QgsProject(PARENT)
-        self.canvas = CANVAS
-        CANVAS.setProject(self.project)
-        self.loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
-        self.vector_driver = self.project.mapLayersByName("testdata")[0]
-        params = {
-            "TEMPLATE": os.path.join(templates_path, "tab_feats_pics.odt"),
-            "VECTOR_LAYER": self.vector_driver,
-            "OUTPUT": "/tmp/test.odt"
-        }
-        result = processing.run('report_wizard:odt_report', params)
-        self.assertEqual(result["OUTPUT"], "/tmp/test.odt")
 
 
 if __name__ == "__main__":
