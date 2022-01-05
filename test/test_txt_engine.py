@@ -51,6 +51,7 @@ class TextEngineTest(unittest.TestCase):
         super(TextEngineTest, self).__init__(*args, **kwargs)
         self.project = QgsProject(PARENT)
         CANVAS.setProject(self.project)
+        self.loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
         self.vector_driver = self.project.mapLayersByName("testdata")[0]
         #self.vector_layer = QgsVectorLayer ("testdata", "%s|layername=testdata" % (os.path.join(templates_path,"testdata.gpkg")), 'ogr')
 
