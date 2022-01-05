@@ -38,10 +38,10 @@ class TextEngineTest(unittest.TestCase):
             os.remove(self.target_md)
         if os.path.exists(self.target_zip):
             os.remove(self.target_zip)
-        project = QgsProject(PARENT)
-        CANVAS.setProject(project)
-        self.loadedProject = project.read(os.path.join(templates_path,"sample_prj.qgs"))
-        self.vector_driver = project.mapLayersByName("testdata")[0]
+        #project = QgsProject(PARENT)
+        #CANVAS.setProject(project)
+        self.loadedProject = QgsProject.instance().read(os.path.join(templates_path,"sample_prj.qgs"))
+        self.vector_driver = QgsProject.instance().mapLayersByName("testdata")[0]
 
     def testLoadProjectTxtEngine(self):  # pylint: disable=too-many-locals,too-many-statements
         """
