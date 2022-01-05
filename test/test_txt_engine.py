@@ -61,7 +61,7 @@ class TextEngineTest(unittest.TestCase):
         """
         project = QgsProject(PARENT)
         CANVAS.setProject(project)
-        loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
+        loadedProject = project.read(os.path.join(templates_path,"sample_prj.qgs"))
         self.assertTrue(loadedProject)
 
     def testSetupTxtEngine(self):  # pylint: disable=too-many-locals,too-many-statements
@@ -70,8 +70,8 @@ class TextEngineTest(unittest.TestCase):
         """
         project = QgsProject(PARENT)
         CANVAS.setProject(project)
-        loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
-        vector_driver = self.project.mapLayersByName("testdata")[0]
+        loadedProject = project.read(os.path.join(templates_path,"sample_prj.qgs"))
+        vector_driver = project.mapLayersByName("testdata")[0]
         engine = hypertext_renderer(IFACE, vector_driver, 100)
         self.assertEqual(len(engine.environment), 4)
         self.assertEqual(len(engine.environment["features"]), 6)
@@ -82,8 +82,8 @@ class TextEngineTest(unittest.TestCase):
         """
         project = QgsProject(PARENT)
         CANVAS.setProject(project)
-        loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
-        vector_driver = self.project.mapLayersByName("testdata")[0]
+        loadedProject = project.read(os.path.join(templates_path,"sample_prj.qgs"))
+        vector_driver = project.mapLayersByName("testdata")[0]
         engine = hypertext_renderer(IFACE, vector_driver, 100)
         template = os.path.join(templates_path,"tab_project.md")
         result = engine.render(template,self.target,embed_images=False)
