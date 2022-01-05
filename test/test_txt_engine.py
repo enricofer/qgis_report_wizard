@@ -45,21 +45,22 @@ class TextEngineTest(unittest.TestCase):
 
     def testLoadProjectTxtEngine(self):  # pylint: disable=too-many-locals,too-many-statements
         """
-        Test engine setup
+        Test loading project
         """
         self.assertTrue(self.loadedProject)
 
     def testSetupTxtEngine(self):  # pylint: disable=too-many-locals,too-many-statements
         """
-        Test engine setup
+        Test setup text engine
         """
         engine = hypertext_renderer(IFACE, self.vector_driver, 100)
+        print (engine.environment)
         self.assertEqual(len(engine.environment), 4)
         self.assertEqual(len(engine.environment["features"]), 6)
 
     def testTxtEngineProjectTemplate(self):  # pylint: disable=too-many-locals,too-many-statements
         """
-        Test engine setup
+        Test render project template
         """
         engine = hypertext_renderer(IFACE, self.vector_driver, 100)
         template = os.path.join(templates_path,"tab_project.md")
@@ -68,10 +69,19 @@ class TextEngineTest(unittest.TestCase):
 
     def testTxtEngineLayersTemplate(self):  # pylint: disable=too-many-locals,too-many-statements
         """
-        Test engine setup
+        Test render layers template
         """
         engine = hypertext_renderer(IFACE, self.vector_driver, 100)
         template = os.path.join(templates_path,"tab_layers.md")
+        result = engine.render(template,self.target_md,embed_images=False)
+        self.assertEqual(result, self.target_zip)
+
+    def testTxtEngineFeaturesTemplate(self):  # pylint: disable=too-many-locals,too-many-statements
+        """
+        Test render features template
+        """
+        engine = hypertext_renderer(IFACE, self.vector_driver, 100)
+        template = os.path.join(templates_path,"tab_feats.md")
         result = engine.render(template,self.target_md,embed_images=False)
         self.assertEqual(result, self.target_zip)
 
