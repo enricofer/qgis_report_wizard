@@ -152,10 +152,10 @@ class hypertext_renderer(abstact_report_engine):
                         path, img_name = os.path.split(img_temppath)
                         return img_name 
                 else:
-                    self.report_exception ("hypertext image export: Can't export layout.",level="warning")
+                    self.report_exception ("hypertext image export: Can't export layout.",level="Warning")
 
             else:
-                self.report_exception ("hypertext image export: Can't export image. Item must be globals, feature, layer or layout.",item=value,level="warning")
+                self.report_exception ("hypertext image export: Can't export image. Item must be globals, feature, layer or layout.",item=value,level="Warning")
 
     def render(self,template,target,embed_images=False):
 
@@ -200,7 +200,7 @@ class hypertext_renderer(abstact_report_engine):
             zip.close()
 
         self.report_exception("Hypertext document exported",target=target,level="Info")
-        return target
+        return target,self.log
                 
 class odt_renderer(abstact_report_engine):
 
@@ -345,4 +345,4 @@ class odt_renderer(abstact_report_engine):
             output.write(result)
             output.flush()
         
-        return True
+        return target, self.log

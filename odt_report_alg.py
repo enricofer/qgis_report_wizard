@@ -79,11 +79,11 @@ class OdtGeneratorAlgorithm(QgsProcessingAlgorithm):
 
         iface = self.provider().iface
         engine = odt_renderer(iface, vector_layer, feature_limit)
-        result = engine.render(template, target)
+        output_file,result = engine.render(template, target)
 
         return {
-            "RESULT": result,
-            "OUTPUT": target
+            "OUTPUT": output_file,
+            "TRACE": result
         }
 
     def name(self):

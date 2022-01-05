@@ -65,6 +65,7 @@ class abstact_report_engine:
     def __init__(self,iface,vector_layer_driver=None, feature_limit=100):
         self.iface = iface
         self.environment = {}
+        self.log = []
 
         self.environment["globals"] = {
             "image": "canvas:"+iface.mapCanvas().theme(),
@@ -205,14 +206,21 @@ class abstact_report_engine:
         self.exporter = canvas_image_exporter(iface.mapCanvas())
 
     def report_exception(self,msg, **kwargs):
+        othermgs = ",".join([(akey+"="+str(aval))for akey,aval in kwargs.items()])
+        msg = msg+" "+othermgs
+
         level = Qgis.Critical
         if "level" in kwargs.keys():
             try:
                 level = getattr(Qgis,kwargs["level"])  
+                self.log.append({
+                    "level": kwargs["level"],
+                    "msg": msg
+                })
             except:
                 pass
-        othermgs = ",".join([(akey+"="+str(aval))for akey,aval in kwargs.items()])
-        QgsMessageLog.logMessage(msg+" "+othermgs, tag="report_wizard", level=level)
+
+        QgsMessageLog.logMessage(msg, tag="report_wizard", level=level)
         if level == Qgis.Critical:
             raise Exception(msg)
 
@@ -320,7 +328,7 @@ class abstact_report_engine:
                 self.report_exception ("url_image export: wrong resource mimetype. must be png or jpeg image",mimetype=mimetype,level="Warning")
                 return
         else:
-            self.report_exception ("url_image export: URL is not string",argtype=str(type(url)),level="warning")
+            self.report_exception ("url_image export: URL is not string",argtype=str(type(url)),level="Warning")
     
     def url_base64_image(self, url, width=150,height=150):
         return self.exporter.img2base64(self.url_image(url,width,height))
