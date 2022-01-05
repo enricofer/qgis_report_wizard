@@ -38,25 +38,22 @@ class TextEngineTest(unittest.TestCase):
             os.remove(self.target_md)
         if os.path.exists(self.target_zip):
             os.remove(self.target_zip)
+        project = QgsProject(PARENT)
+        CANVAS.setProject(project)
+        self.loadedProject = project.read(os.path.join(templates_path,"sample_prj.qgs"))
+        self.vector_driver = project.mapLayersByName("testdata")[0]
 
     def testLoadProjectTxtEngine(self):  # pylint: disable=too-many-locals,too-many-statements
         """
         Test engine setup
         """
-        project = QgsProject(PARENT)
-        CANVAS.setProject(project)
-        loadedProject = project.read(os.path.join(templates_path,"sample_prj.qgs"))
-        self.assertTrue(loadedProject)
+        self.assertTrue(self.loadedProject)
 
     def testSetupTxtEngine(self):  # pylint: disable=too-many-locals,too-many-statements
         """
         Test engine setup
         """
-        project = QgsProject(PARENT)
-        CANVAS.setProject(project)
-        loadedProject = project.read(os.path.join(templates_path,"sample_prj.qgs"))
-        vector_driver = project.mapLayersByName("testdata")[0]
-        engine = hypertext_renderer(IFACE, vector_driver, 100)
+        engine = hypertext_renderer(IFACE, self.vector_driver, 100)
         self.assertEqual(len(engine.environment), 4)
         self.assertEqual(len(engine.environment["features"]), 6)
 
@@ -64,11 +61,7 @@ class TextEngineTest(unittest.TestCase):
         """
         Test engine setup
         """
-        project = QgsProject(PARENT)
-        CANVAS.setProject(project)
-        loadedProject = project.read(os.path.join(templates_path,"sample_prj.qgs"))
-        vector_driver = project.mapLayersByName("testdata")[0]
-        engine = hypertext_renderer(IFACE, vector_driver, 100)
+        engine = hypertext_renderer(IFACE, self.vector_driver, 100)
         template = os.path.join(templates_path,"tab_project.md")
         result = engine.render(template,self.target,embed_images=False)
         self.assertEqual(result, self.target_zip)
