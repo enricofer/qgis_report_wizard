@@ -47,7 +47,7 @@ templates_path = os.path.join(
 class TextEngineTest(unittest.TestCase):
     """Test odt algorithm construction."""
 
-    def __init__(self, *args, **kwargs):
+    def init__(self, *args, **kwargs):
         super(TextEngineTest, self).__init__(*args, **kwargs)
         self.project = QgsProject(PARENT)
         CANVAS.setProject(self.project)
@@ -55,19 +55,34 @@ class TextEngineTest(unittest.TestCase):
         self.vector_driver = self.project.mapLayersByName("testdata")[0]
         #self.vector_layer = QgsVectorLayer ("testdata", "%s|layername=testdata" % (os.path.join(templates_path,"testdata.gpkg")), 'ogr')
 
-    def __setup(self):
+    def setup(self):
+        self.target_md = "/tmp/OUTPUT.md"
+        self.target_zip = self.target_md+".zip"
+        if os.path.exists(self.target):
+            os.remove(self.target)
+        if os.path.exists(self.target_zip):
+            os.remove(self.target_zip)
         self.project = QgsProject(PARENT)
         CANVAS.setProject(self.project)
         self.loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
         self.vector_driver = self.project.mapLayersByName("testdata")[0]
+        self.engine = hypertext_renderer(IFACE, self.vector_driver, 100)
 
-    def testSetupEngine(self):  # pylint: disable=too-many-locals,too-many-statements
+    def testSetupTxtEngine(self):  # pylint: disable=too-many-locals,too-many-statements
         """
         Test engine setup
         """
-        engine = hypertext_renderer(IFACE, self.vector_driver, 100)
-        self.assertEqual(len(engine.environment), 4)
-        self.assertEqual(len(engine.environment["features"]), 6)
+        self.assertEqual(len(self.engine.environment), 4)
+        self.assertEqual(len(self.engine.environment["features"]), 6)
+
+    def testTxtEngineProjectTemplate(self):  # pylint: disable=too-many-locals,too-many-statements
+        """
+        Test engine setup
+        """
+        template = os.path.join(templates_path,"tab_project.md")
+        result = self.engine.render(template,self.target,embed_images=False)
+        self.assertEqual(result, self.target_zip)
+
 
 if __name__ == "__main__":
     suite = unittest.makeSuite(TextEngineTest)

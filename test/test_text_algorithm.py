@@ -104,23 +104,6 @@ class TextAlgorithmTest(unittest.TestCase):
         vector_driver = project.mapLayersByName("testdata")[0]
         self.assertEqual(vector_driver.id(), "testdata_b32cec00_cc85_4d91_adda_cc9ccd29b310")
 
-    def testRunTxtFeaturesAlg(self): 
-        self.project = QgsProject(PARENT)
-        self.canvas = CANVAS
-        CANVAS.setProject(self.project)
-        self.loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
-        self.vector_driver = self.project.mapLayersByName("testdata")[0]
-        params = {
-            "TEMPLATE": os.path.join(templates_path, "tab_feats.md"),
-            "VECTOR_LAYER": self.vector_driver,
-            "OUTPUT": "/tmp/test.odt"
-        }
-        result = processing.run('report_wizard:hypertext_report', params)
-        self.assertEqual(result["OUTPUT"], "/tmp/test.md.zip")
-        params["EMBED_IMAGES"] = True
-        result = processing.run('report_wizard:hypertext_report', params)
-        self.assertEqual(result["OUTPUT"], "/tmp/test.md")
-
 if __name__ == "__main__":
     suite = unittest.makeSuite(TextAlgorithmTest)
     runner = unittest.TextTestRunner(verbosity=2)
