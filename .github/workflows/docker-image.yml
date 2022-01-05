@@ -4,6 +4,7 @@ on:
   push:
     paths-ignore:
     - "README.md"
+    - ".gitignore"
   pull_request:
     types: [opened, synchronize, edited]
 

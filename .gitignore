@@ -7,3 +7,6 @@ __pycache__/
 sample/
 .DS_Store
 settings.json
+.~*
+*-shm
+*-wal
