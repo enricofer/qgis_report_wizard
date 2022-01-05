@@ -46,18 +46,18 @@ templates_path = os.path.join(
 class TextAlgorithmTest(unittest.TestCase):
     """Test odt algorithm construction."""
 
-    def init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super(TextAlgorithmTest, self).__init__(*args, **kwargs)
-        self.project = QgsProject(PARENT)
-        self.canvas = CANVAS
-        CANVAS.setProject(self.project)
-        self.loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
-        self.vector_driver = self.project.mapLayersByName("testdata")[0]
+        self.project0 = QgsProject(PARENT)
+        self.canvas0 = CANVAS
+        self.canvas0.setProject(self.project0)
+        self.loadedProject0 = self.project0.read(os.path.join(templates_path,"sample_prj.qgs"))
+        self.vector_driver0 = self.project0.mapLayersByName("testdata")[0]
 
     def setup(self):
         self.project = QgsProject(PARENT)
         self.canvas = CANVAS
-        CANVAS.setProject(self.project)
+        self.canvas.setProject(self.project)
         self.loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
         self.vector_driver = self.project.mapLayersByName("testdata")[0]
 
@@ -84,109 +84,25 @@ class TextAlgorithmTest(unittest.TestCase):
         vector_output = alg.outputDefinition('OUTPUT')
         self.assertEqual(vector_output.type(), 'outputFile')
 
-    def testcheckprojectLoaded(self):
-        self.project = QgsProject(PARENT)
-        self.canvas = CANVAS
-        CANVAS.setProject(self.project)
-        self.loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
-        self.vector_driver = self.project.mapLayersByName("testdata")[0]
-        self.assertEqual(self.loadedProject.count(), 5)
+    def testcheckprojectLoadedSetup(self):
+        self.assertEqual(self.loadedProject, True)
 
-    def testRunTxtProjectAlg(self):
-        self.project = QgsProject(PARENT)
-        self.canvas = CANVAS
-        CANVAS.setProject(self.project)
-        self.loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
-        self.vector_driver = self.project.mapLayersByName("testdata")[0]
-        params = {
-            "TEMPLATE": os.path.join(templates_path, "tab_project.md"),
-            "OUTPUT": "/tmp/test.odt"
-        }
-        result = processing.run('report_wizard:hypertext_report', params)
-        self.assertEqual(result["OUTPUT"], "/tmp/test.md.zip")
-        params["EMBED_IMAGES"] = True
-        result = processing.run('report_wizard:hypertext_report', params)
-        self.assertEqual(result["OUTPUT"], "/tmp/test.md")
+    def testcheckprojectLoadedInit(self):
+        self.assertEqual(self.loadedProject0, True)
 
-    def testRunTxtThemesAlg(self): 
-        self.project = QgsProject(PARENT)
-        self.canvas = CANVAS
-        CANVAS.setProject(self.project)
-        self.loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
-        self.vector_driver = self.project.mapLayersByName("testdata")[0]
-        params = {
-            "TEMPLATE": os.path.join(templates_path, "tab_themes.md"),
-            "OUTPUT": "/tmp/test.odt"
-        }
-        result = processing.run('report_wizard:hypertext_report', params)
-        self.assertEqual(result["OUTPUT"], "/tmp/test.md.zip")
-        params["EMBED_IMAGES"] = True
-        result = processing.run('report_wizard:hypertext_report', params)
-        self.assertEqual(result["OUTPUT"], "/tmp/test.md")
+    def testcheckprojectLoadedLocal(self):
+        project = QgsProject(PARENT)
+        CANVAS.setProject(project)
+        loadedProject = project.read(os.path.join(templates_path,"sample_prj.qgs"))
+        self.assertEqual(loadedProject, True)
 
-    def testRunTxtBookmarksAlg(self): 
-        self.project = QgsProject(PARENT)
-        self.canvas = CANVAS
-        CANVAS.setProject(self.project)
-        self.loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
-        self.vector_driver = self.project.mapLayersByName("testdata")[0]
-        params = {
-            "TEMPLATE": os.path.join(templates_path, "tab_bookmarks.md"),
-            "OUTPUT": "/tmp/test.odt"
-        }
-        result = processing.run('report_wizard:hypertext_report', params)
-        self.assertEqual(result["OUTPUT"], "/tmp/test.md.zip")
-        params["EMBED_IMAGES"] = True
-        result = processing.run('report_wizard:hypertext_report', params)
-        self.assertEqual(result["OUTPUT"], "/tmp/test.md")
-
-    def testRunTxtLayoutAlg(self): 
-        self.project = QgsProject(PARENT)
-        self.canvas = CANVAS
-        CANVAS.setProject(self.project)
-        self.loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
-        self.vector_driver = self.project.mapLayersByName("testdata")[0]
-        params = {
-            "TEMPLATE": os.path.join(templates_path, "tab_layout.md"),
-            "OUTPUT": "/tmp/test.odt"
-        }
-        result = processing.run('report_wizard:hypertext_report', params)
-        self.assertEqual(result["OUTPUT"], "/tmp/test.md.zip")
-        params["EMBED_IMAGES"] = True
-        result = processing.run('report_wizard:hypertext_report', params)
-        self.assertEqual(result["OUTPUT"], "/tmp/test.md")
-
-    def testRunTxtAtlasAlg(self): 
-        self.project = QgsProject(PARENT)
-        self.canvas = CANVAS
-        CANVAS.setProject(self.project)
-        self.loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
-        self.vector_driver = self.project.mapLayersByName("testdata")[0]
-        params = {
-            "TEMPLATE": os.path.join(templates_path, "tab_atlas.md"),
-            "OUTPUT": "/tmp/test.odt"
-        }
-        result = processing.run('report_wizard:hypertext_report', params)
-        self.assertEqual(result["OUTPUT"], "/tmp/test.md.zip")
-        params["EMBED_IMAGES"] = True
-        result = processing.run('report_wizard:hypertext_report', params)
-        self.assertEqual(result["OUTPUT"], "/tmp/test.md")
-
-    def testRunTxtLayersAlg(self): 
-        self.project = QgsProject(PARENT)
-        self.canvas = CANVAS
-        CANVAS.setProject(self.project)
-        self.loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
-        self.vector_driver = self.project.mapLayersByName("testdata")[0]
-        params = {
-            "TEMPLATE": os.path.join(templates_path, "tab_layers.md"),
-            "OUTPUT": "/tmp/test.odt"
-        }
-        result = processing.run('report_wizard:hypertext_report', params)
-        self.assertEqual(result["OUTPUT"], "/tmp/test.md.zip")
-        params["EMBED_IMAGES"] = True
-        result = processing.run('report_wizard:hypertext_report', params)
-        self.assertEqual(result["OUTPUT"], "/tmp/test.md")
+    def testRunTxtLoadedLocalLayer(self): 
+        project = QgsProject(PARENT)
+        canvas = CANVAS
+        CANVAS.setProject(project)
+        loadedProject = project.read(os.path.join(templates_path,"sample_prj.qgs"))
+        vector_driver = project.mapLayersByName("testdata")[0]
+        self.assertEqual(vector_driver.id(), "testdata_b32cec00_cc85_4d91_adda_cc9ccd29b310")
 
     def testRunTxtFeaturesAlg(self): 
         self.project = QgsProject(PARENT)
@@ -194,7 +110,6 @@ class TextAlgorithmTest(unittest.TestCase):
         CANVAS.setProject(self.project)
         self.loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
         self.vector_driver = self.project.mapLayersByName("testdata")[0]
-        self.assertEqual(self.vector_driver.id(), "testdata_b32cec00_cc85_4d91_adda_cc9ccd29b310")
         params = {
             "TEMPLATE": os.path.join(templates_path, "tab_feats.md"),
             "VECTOR_LAYER": self.vector_driver,
@@ -205,24 +120,6 @@ class TextAlgorithmTest(unittest.TestCase):
         params["EMBED_IMAGES"] = True
         result = processing.run('report_wizard:hypertext_report', params)
         self.assertEqual(result["OUTPUT"], "/tmp/test.md")
-
-    def testRunTxtFeaturesWithPicsAlg(self): 
-        self.project = QgsProject(PARENT)
-        self.canvas = CANVAS
-        CANVAS.setProject(self.project)
-        self.loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
-        self.vector_driver = self.project.mapLayersByName("testdata")[0]
-        params = {
-            "TEMPLATE": os.path.join(templates_path, "tab_feats_pics.md"),
-            "VECTOR_LAYER": self.vector_driver,
-            "OUTPUT": "/tmp/test.odt"
-        }
-        result = processing.run('report_wizard:hypertext_report', params)
-        self.assertEqual(result["OUTPUT"], "/tmp/test.md.zip")
-        params["EMBED_IMAGES"] = True
-        result = processing.run('report_wizard:hypertext_report', params)
-        self.assertEqual(result["OUTPUT"], "/tmp/test.md")
-
 
 if __name__ == "__main__":
     suite = unittest.makeSuite(TextAlgorithmTest)
