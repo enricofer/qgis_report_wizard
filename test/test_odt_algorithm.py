@@ -62,6 +62,11 @@ class OdtAlgorithmTest(unittest.TestCase):
         self.vector_driver = self.project.mapLayersByName("testdata")[0]
 
     def testIfTestProjectLoaded(self):
+        self.project = QgsProject(PARENT)
+        self.canvas = CANVAS
+        CANVAS.setProject(self.project)
+        self.loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
+        self.vector_driver = self.project.mapLayersByName("testdata")[0]
         self.assertEqual(self.loadedProject, True)
 
     def testSetupOdtAlg(self):  # pylint: disable=too-many-locals,too-many-statements
@@ -86,6 +91,11 @@ class OdtAlgorithmTest(unittest.TestCase):
         self.assertEqual(vector_output.type(), 'outputFile')
 
     def testRunOdtProjectAlg(self): 
+        self.project = QgsProject(PARENT)
+        self.canvas = CANVAS
+        CANVAS.setProject(self.project)
+        self.loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
+        self.vector_driver = self.project.mapLayersByName("testdata")[0]
         params = {
             "TEMPLATE": os.path.join(templates_path, "tab_project.odt"),
             "OUTPUT": "/tmp/test.odt"
@@ -94,6 +104,11 @@ class OdtAlgorithmTest(unittest.TestCase):
         self.assertEqual(result["OUTPUT"], "/tmp/test.odt")
 
     def testRunOdtThemesAlg(self): 
+        self.project = QgsProject(PARENT)
+        self.canvas = CANVAS
+        CANVAS.setProject(self.project)
+        self.loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
+        self.vector_driver = self.project.mapLayersByName("testdata")[0]
         params = {
             "TEMPLATE": os.path.join(templates_path, "tab_themes.odt"),
             "OUTPUT": "/tmp/test.odt"
@@ -102,6 +117,11 @@ class OdtAlgorithmTest(unittest.TestCase):
         self.assertEqual(result["OUTPUT"], "/tmp/test.odt")
 
     def testRunOdtBookmarksAlg(self): 
+        self.project = QgsProject(PARENT)
+        self.canvas = CANVAS
+        CANVAS.setProject(self.project)
+        self.loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
+        self.vector_driver = self.project.mapLayersByName("testdata")[0]
         params = {
             "TEMPLATE": os.path.join(templates_path, "tab_bookmarks.odt"),
             "OUTPUT": "/tmp/test.odt"
@@ -110,6 +130,11 @@ class OdtAlgorithmTest(unittest.TestCase):
         self.assertEqual(result["OUTPUT"], "/tmp/test.odt")
 
     def testRunOdtLayoutAlg(self): 
+        self.project = QgsProject(PARENT)
+        self.canvas = CANVAS
+        CANVAS.setProject(self.project)
+        self.loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
+        self.vector_driver = self.project.mapLayersByName("testdata")[0]
         params = {
             "TEMPLATE": os.path.join(templates_path, "tab_layout.odt"),
             "OUTPUT": "/tmp/test.odt"
@@ -118,6 +143,11 @@ class OdtAlgorithmTest(unittest.TestCase):
         self.assertEqual(result["OUTPUT"], "/tmp/test.odt")
 
     def testRunLayersAlg(self): 
+        self.project = QgsProject(PARENT)
+        self.canvas = CANVAS
+        CANVAS.setProject(self.project)
+        self.loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
+        self.vector_driver = self.project.mapLayersByName("testdata")[0]
         params = {
             "TEMPLATE": os.path.join(templates_path, "tab_layers.odt"),
             "OUTPUT": "/tmp/test.odt"
@@ -126,6 +156,11 @@ class OdtAlgorithmTest(unittest.TestCase):
         self.assertEqual(result["OUTPUT"], "/tmp/test.odt")
 
     def testRunFeaturesAlg(self): 
+        self.project = QgsProject(PARENT)
+        self.canvas = CANVAS
+        CANVAS.setProject(self.project)
+        self.loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
+        self.vector_driver = self.project.mapLayersByName("testdata")[0]
         params = {
             "TEMPLATE": os.path.join(templates_path, "tab_feats.odt"),
             "VECTOR_LAYER": self.vector_driver,
@@ -135,6 +170,11 @@ class OdtAlgorithmTest(unittest.TestCase):
         self.assertEqual(result["OUTPUT"], "/tmp/test.odt")
 
     def testRunFeaturesWithPicsAlg(self): 
+        self.project = QgsProject(PARENT)
+        self.canvas = CANVAS
+        CANVAS.setProject(self.project)
+        self.loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
+        self.vector_driver = self.project.mapLayersByName("testdata")[0]
         params = {
             "TEMPLATE": os.path.join(templates_path, "tab_feats_pics.odt"),
             "VECTOR_LAYER": self.vector_driver,

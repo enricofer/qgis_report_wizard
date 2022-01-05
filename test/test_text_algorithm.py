@@ -84,10 +84,20 @@ class TextAlgorithmTest(unittest.TestCase):
         vector_output = alg.outputDefinition('OUTPUT')
         self.assertEqual(vector_output.type(), 'outputFile')
 
-    def testcheckprojectLoaded(self): 
+    def testcheckprojectLoaded(self):
+        self.project = QgsProject(PARENT)
+        self.canvas = CANVAS
+        CANVAS.setProject(self.project)
+        self.loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
+        self.vector_driver = self.project.mapLayersByName("testdata")[0]
         self.assertEqual(self.loadedProject.count(), 5)
 
-    def testRunTxtProjectAlg(self): 
+    def testRunTxtProjectAlg(self):
+        self.project = QgsProject(PARENT)
+        self.canvas = CANVAS
+        CANVAS.setProject(self.project)
+        self.loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
+        self.vector_driver = self.project.mapLayersByName("testdata")[0]
         params = {
             "TEMPLATE": os.path.join(templates_path, "tab_project.md"),
             "OUTPUT": "/tmp/test.odt"
@@ -99,6 +109,11 @@ class TextAlgorithmTest(unittest.TestCase):
         self.assertEqual(result["OUTPUT"], "/tmp/test.md")
 
     def testRunTxtThemesAlg(self): 
+        self.project = QgsProject(PARENT)
+        self.canvas = CANVAS
+        CANVAS.setProject(self.project)
+        self.loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
+        self.vector_driver = self.project.mapLayersByName("testdata")[0]
         params = {
             "TEMPLATE": os.path.join(templates_path, "tab_themes.md"),
             "OUTPUT": "/tmp/test.odt"
@@ -110,6 +125,11 @@ class TextAlgorithmTest(unittest.TestCase):
         self.assertEqual(result["OUTPUT"], "/tmp/test.md")
 
     def testRunTxtBookmarksAlg(self): 
+        self.project = QgsProject(PARENT)
+        self.canvas = CANVAS
+        CANVAS.setProject(self.project)
+        self.loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
+        self.vector_driver = self.project.mapLayersByName("testdata")[0]
         params = {
             "TEMPLATE": os.path.join(templates_path, "tab_bookmarks.md"),
             "OUTPUT": "/tmp/test.odt"
@@ -121,6 +141,11 @@ class TextAlgorithmTest(unittest.TestCase):
         self.assertEqual(result["OUTPUT"], "/tmp/test.md")
 
     def testRunTxtLayoutAlg(self): 
+        self.project = QgsProject(PARENT)
+        self.canvas = CANVAS
+        CANVAS.setProject(self.project)
+        self.loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
+        self.vector_driver = self.project.mapLayersByName("testdata")[0]
         params = {
             "TEMPLATE": os.path.join(templates_path, "tab_layout.md"),
             "OUTPUT": "/tmp/test.odt"
@@ -132,6 +157,11 @@ class TextAlgorithmTest(unittest.TestCase):
         self.assertEqual(result["OUTPUT"], "/tmp/test.md")
 
     def testRunTxtAtlasAlg(self): 
+        self.project = QgsProject(PARENT)
+        self.canvas = CANVAS
+        CANVAS.setProject(self.project)
+        self.loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
+        self.vector_driver = self.project.mapLayersByName("testdata")[0]
         params = {
             "TEMPLATE": os.path.join(templates_path, "tab_atlas.md"),
             "OUTPUT": "/tmp/test.odt"
@@ -143,6 +173,11 @@ class TextAlgorithmTest(unittest.TestCase):
         self.assertEqual(result["OUTPUT"], "/tmp/test.md")
 
     def testRunTxtLayersAlg(self): 
+        self.project = QgsProject(PARENT)
+        self.canvas = CANVAS
+        CANVAS.setProject(self.project)
+        self.loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
+        self.vector_driver = self.project.mapLayersByName("testdata")[0]
         params = {
             "TEMPLATE": os.path.join(templates_path, "tab_layers.md"),
             "OUTPUT": "/tmp/test.odt"
@@ -154,6 +189,11 @@ class TextAlgorithmTest(unittest.TestCase):
         self.assertEqual(result["OUTPUT"], "/tmp/test.md")
 
     def testRunTxtFeaturesAlg(self): 
+        self.project = QgsProject(PARENT)
+        self.canvas = CANVAS
+        CANVAS.setProject(self.project)
+        self.loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
+        self.vector_driver = self.project.mapLayersByName("testdata")[0]
         params = {
             "TEMPLATE": os.path.join(templates_path, "tab_feats.md"),
             "VECTOR_LAYER": self.vector_driver,
@@ -166,6 +206,11 @@ class TextAlgorithmTest(unittest.TestCase):
         self.assertEqual(result["OUTPUT"], "/tmp/test.md")
 
     def testRunTxtFeaturesWithPicsAlg(self): 
+        self.project = QgsProject(PARENT)
+        self.canvas = CANVAS
+        CANVAS.setProject(self.project)
+        self.loadedProject = self.project.read(os.path.join(templates_path,"sample_prj.qgs"))
+        self.vector_driver = self.project.mapLayersByName("testdata")[0]
         params = {
             "TEMPLATE": os.path.join(templates_path, "tab_feats_pics.md"),
             "VECTOR_LAYER": self.vector_driver,
