@@ -48,13 +48,8 @@ class TextAlgorithmTest(unittest.TestCase):
 
     def __init__(self, *args, **kwargs):
         super(TextAlgorithmTest, self).__init__(*args, **kwargs)
-        self.project0 = QgsProject(PARENT)
-        self.canvas0 = CANVAS
-        self.canvas0.setProject(self.project0)
-        self.loadedProject0 = self.project0.read(os.path.join(templates_path,"sample_prj.qgs"))
-        self.vector_driver0 = self.project0.mapLayersByName("testdata")[0]
 
-    def setup(self):
+    def setUp(self):
         self.project = QgsProject(PARENT)
         self.canvas = CANVAS
         self.canvas.setProject(self.project)
@@ -87,22 +82,8 @@ class TextAlgorithmTest(unittest.TestCase):
     def testcheckprojectLoadedSetup(self):
         self.assertEqual(self.loadedProject, True)
 
-    def testcheckprojectLoadedInit(self):
-        self.assertEqual(self.loadedProject0, True)
-
-    def testcheckprojectLoadedLocal(self):
-        project = QgsProject(PARENT)
-        CANVAS.setProject(project)
-        loadedProject = project.read(os.path.join(templates_path,"sample_prj.qgs"))
-        self.assertEqual(loadedProject, True)
-
-    def testRunTxtLoadedLocalLayer(self): 
-        project = QgsProject(PARENT)
-        canvas = CANVAS
-        CANVAS.setProject(project)
-        loadedProject = project.read(os.path.join(templates_path,"sample_prj.qgs"))
-        vector_driver = project.mapLayersByName("testdata")[0]
-        self.assertEqual(vector_driver.id(), "testdata_b32cec00_cc85_4d91_adda_cc9ccd29b310")
+    def testRunTxtLoadedLayer(self): 
+        self.assertEqual(self.vector_driver.id(), "testdata_b32cec00_cc85_4d91_adda_cc9ccd29b310")
 
 if __name__ == "__main__":
     suite = unittest.makeSuite(TextAlgorithmTest)

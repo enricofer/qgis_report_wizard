@@ -63,7 +63,16 @@ class TextEngineTest(unittest.TestCase):
         """
         engine = hypertext_renderer(IFACE, self.vector_driver, 100)
         template = os.path.join(templates_path,"tab_project.md")
-        result = engine.render(template,self.target,embed_images=False)
+        result = engine.render(template,self.target_md,embed_images=False)
+        self.assertEqual(result, self.target_zip)
+
+    def testTxtEngineLayersTemplate(self):  # pylint: disable=too-many-locals,too-many-statements
+        """
+        Test engine setup
+        """
+        engine = hypertext_renderer(IFACE, self.vector_driver, 100)
+        template = os.path.join(templates_path,"tab_layers.md")
+        result = engine.render(template,self.target_md,embed_images=False)
         self.assertEqual(result, self.target_zip)
 
 
