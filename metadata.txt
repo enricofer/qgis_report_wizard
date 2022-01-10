@@ -3,14 +3,14 @@
 # This file should be included when you package your plugin.# Mandatory items:
 
 [general]
-name=Report wizard
+name=QGIS Report wizard
 qgisMinimumVersion=3.16
-description=QGIS templating engine for odt and markdown documents 
-version=0.1
+description=QGIS templating engine for odt and hypertext documents 
+version=1.0.0
 author=Enrico Ferreguti
 email=enricofer@gmail.com
 
-about=Provide a brief description of the plugin and its purpose.
+about=The plugin makes use of python templating libraries (jinja2, secretary) for creating reports from data (variables, layers, features, layouts and other global settings) within the current QGIS project in ODT format or other text/hypertext format. More info on repository home page: https://github.com/enricofer/qgis_report_wizard
 
 tracker=https://github.com/enricofer/qgis_report_wizard/issues
 repository=https://github.com/enricofer/qgis_report_wizard
@@ -18,16 +18,16 @@ repository=https://github.com/enricofer/qgis_report_wizard
 
 # Recommended items:
 
-hasProcessingProvider=no
+hasProcessingProvider=yes
 # Uncomment the following line and add your changelog:
 # changelog=
 
 # Tags are comma separated with spaces allowed
-tags=reports markdown html
+tags=report, markdown, html, odt, jinja2, secretary, documents
 
 homepage=https://github.com/enricofer/qgis_report_wizard
 category=Plugins
-icon=icon.png
+icon=support/icon.png
 # experimental flag
 experimental=False
 

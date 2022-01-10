@@ -12,7 +12,7 @@ A set of sample templates and test data can be found in the [test/templates dire
 ## python dependencies
 
 - [jinja2](https://jinja.palletsprojects.com/en/3.0.x/)  usually bundled with QGIS distribution or `pip install jinja2` if not provided
-- [secretary](https://github.com/christopher-ramirez/secretary)  bundled with plugin as external library
+- [secretary](https://github.com/christopher-ramirez/secretary)  bundled with the plugin as external library
 
 ## jinja2 template syntax
 

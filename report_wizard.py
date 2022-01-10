@@ -181,7 +181,7 @@ class reportWizard:
             action.setWhatsThis(whats_this)
 
         if toolbutton:
-            self.defaultAction = QAction( QIcon(self.main_icon), "Report Wizard", parent)
+            self.defaultAction = QAction( QIcon(self.main_icon), "Report wizard", parent)
             self.toolButton.setDefaultAction(self.defaultAction)
             self.toolButtonMenu.addAction(action)
                 
@@ -221,6 +221,20 @@ class reportWizard:
 
         sub_actions = [
             {
+                "text":"Readme",
+                "icon_path":os.path.join(self.plugin_dir, 'support', 'icon.png'),
+                "callback": lambda x: QDesktopServices.openUrl(QUrl("https://github.com/enricofer/qgis_report_wizard/blob/master/README.md")),
+                "parent": self.iface.mainWindow(),
+                "toolbutton": self.toolButton,
+            },
+            {
+                "text":"Sample templates",
+                "icon_path":os.path.join(self.plugin_dir, 'support', 'icon.png'),
+                "callback": self.open_templates_folder,
+                "parent": self.iface.mainWindow(),
+                "toolbutton": self.toolButton,
+            },
+            {
                 "text":"Odt report generator",
                 "icon_path":os.path.join(self.plugin_dir, 'support', 'icon_odt.png'),
                 "args": ["report_wizard:odt_report", alg_params],
@@ -252,7 +266,7 @@ class reportWizard:
         else:
             for action in self.actions:
                 self.iface.removePluginMenu(
-                    self.tr(u'&Report wizard'),
+                    self.menu,
                     action)
                 self.iface.removeToolBarIcon(action)
         try:
@@ -260,6 +274,11 @@ class reportWizard:
         except:
             pass
 
+    
+    def open_templates_folder(self):
+        templates_folder = os.path.join(self.plugin_dir,"test","templates")
+        templates_folder_url = QUrl.fromLocalFile(templates_folder)
+        QDesktopServices.openUrl(templates_folder_url)
 
     def run_alg(self, triggeredAction, alg, alg_params):  
         self.toolButton.setDefaultAction(triggeredAction)      
