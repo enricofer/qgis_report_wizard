@@ -6,7 +6,7 @@
 name=QGIS Report wizard
 qgisMinimumVersion=3.16
 description=QGIS templating engine for odt and hypertext documents 
-version=1.0.0
+version=1.0.1
 author=Enrico Ferreguti
 email=enricofer@gmail.com
 
@@ -20,7 +20,7 @@ repository=https://github.com/enricofer/qgis_report_wizard
 
 hasProcessingProvider=yes
 # Uncomment the following line and add your changelog:
-# changelog=
+# changelog=1.0.1 Main icon issue fix
 
 # Tags are comma separated with spaces allowed
 tags=report, markdown, html, odt, jinja2, secretary, documents
