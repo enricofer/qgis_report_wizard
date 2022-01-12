@@ -210,7 +210,7 @@ class reportWizard:
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
         self.initProcessing()
 
-        self.main_icon = os.path.join(self.plugin_dir, 'icon.png')
+        self.main_icon = os.path.join(self.plugin_dir, 'support', 'icon.png')
         self.toolButton = QToolButton()
         self.toolButtonMenu = QMenu()
         self.toolButton.setMenu(self.toolButtonMenu)
