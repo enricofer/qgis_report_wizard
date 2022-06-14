@@ -71,7 +71,7 @@ class hypertext_renderer(abstact_report_engine):
 
     def export_canvas_image(self,bb,width,height,theme,img_path,around_border):
         
-        box = self.self.cleanBoundingBox(bb)
+        box = self.cleanBoundingBox(bb)
 
         if around_border:
             if width >= height:
