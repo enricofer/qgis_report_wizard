@@ -21,7 +21,7 @@
  *                                                                         *
  ***************************************************************************/
 """
-from typing import OrderedDict
+
 from qgis.PyQt.QtCore import QSize, QSettings, QTranslator, QCoreApplication, QUrl, QFileInfo, Qt, QByteArray, QBuffer, QIODevice
 from qgis.PyQt.QtGui import QIcon, QImage, QPainter, QRegion, QBitmap, QPixmap, QDesktopServices
 from qgis.PyQt.QtWidgets import QAction, QFileDialog, QToolButton, QMenu, QLabel, QSizePolicy
