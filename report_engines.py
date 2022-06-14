@@ -159,7 +159,7 @@ class hypertext_renderer(abstact_report_engine):
             else:
                 self.report_exception ("hypertext image export: Can't export image. Item must be globals, feature, layer or layout.",item=value,level="Warning")
 
-    def render(self,template,target,embed_images=False):
+    def render(self,template,target,embed_images=False,save_to_folder=False):
 
         textchars = bytearray({7,8,9,10,12,13,27} | set(range(0x20, 0x100)) - {0x7f})
         is_binary_string = lambda bytes: bool(bytes.translate(None, textchars))
@@ -167,6 +167,7 @@ class hypertext_renderer(abstact_report_engine):
             self.report_exception ("hypertext report: Can't process bynary templates")
 
         template_path,template_filename = os.path.split(template)
+        target_path,target_filename = os.path.split(target)
         loader = FileSystemLoader(template_path)
         env = Environment(
             loader=loader,
@@ -185,21 +186,25 @@ class hypertext_renderer(abstact_report_engine):
             output.write(result)
             output.close()
         else:
-            target_path,target_filename = os.path.split(target)
             output = open(os.path.join(self.tempdir,target_filename), 'w')
             output.write(result)
             output.close()
-            target = target+".zip"
-            md_files = os.listdir(self.tempdir)
-            zip = ZipFile(target, "w", ZIP_DEFLATED)
-            for f in md_files:
-                zip.write(os.path.join(self.tempdir,f),f)
+            if save_to_folder:
+                md_files = os.listdir(self.tempdir)
+                for f in md_files:
+                    os.rename(os.path.join(self.tempdir,f),os.path.join(target_path,f))
+            else:
+                target = target+".zip"
+                md_files = os.listdir(self.tempdir)
+                zip = ZipFile(target, "w", ZIP_DEFLATED)
+                for f in md_files:
+                    zip.write(os.path.join(self.tempdir,f),f)
 
-            # fix for Linux zip files read in Windows
-            for filename in zip.filelist:
-                filename.create_system = 0
+                # fix for Linux zip files read in Windows
+                for filename in zip.filelist:
+                    filename.create_system = 0
 
-            zip.close()
+                zip.close()
 
         self.report_exception("Hypertext document exported",target=target,level="Info")
         return target,self.log

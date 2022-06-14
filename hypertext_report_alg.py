@@ -51,6 +51,7 @@ class HypertextGeneratorAlgorithm(QgsProcessingAlgorithm):
     LIMIT = "LIMIT"
     OUTPUT = "OUTPUT"
     EMBED_IMAGES = "EMBED_IMAGES"
+    SAVE_TO_FOLDER = "SAVE_TO_FOLDER"
 
     def init__(self, *args,**kwargs):
         print (kwargs)
@@ -64,7 +65,8 @@ class HypertextGeneratorAlgorithm(QgsProcessingAlgorithm):
         self.addParameter(QgsProcessingParameterFile(self.TEMPLATE, 'Text template (html, xml, markdown, txt)', defaultValue=None))
         self.addParameter(QgsProcessingParameterVectorLayer(self.VECTOR_LAYER, 'Vector Layer that drive feature rendering', types=[QgsProcessing.TypeVectorAnyGeometry], optional=True))
         self.addParameter(QgsProcessingParameterNumber(self.LIMIT, 'Limit features rendering amount', defaultValue=100)) 
-        self.addParameter(QgsProcessingParameterBoolean(self.EMBED_IMAGES, 'Base64 Encode and Embed images in markdown document', defaultValue=False))
+        self.addParameter(QgsProcessingParameterBoolean(self.EMBED_IMAGES, 'Base64 Encode and Embed images in text document', defaultValue=False))
+        self.addParameter(QgsProcessingParameterBoolean(self.SAVE_TO_FOLDER, 'Save text and images to folder', defaultValue=False))
         self.addParameter(QgsProcessingParameterFileDestination(self.OUTPUT, 'Rendered output text file'))
 
     def processAlgorithm(self, parameters, context, feedback):
@@ -76,6 +78,15 @@ class HypertextGeneratorAlgorithm(QgsProcessingAlgorithm):
         feature_limit = self.parameterAsInt(parameters, self.LIMIT, context)
         target = self.parameterAsFileOutput(parameters, self.OUTPUT, context)
         embed_images = self.parameterAsBoolean(parameters, self.EMBED_IMAGES, context)
+        save_to_folder = self.parameterAsBoolean(parameters, self.SAVE_TO_FOLDER, context)
+
+        if save_to_folder and parameters[self.OUTPUT] == 'TEMPORARY_OUTPUT':
+            save_to_folder = False
+            feedback.reportError('With "Save text and images to folder" option, output folder have to be specified\n')
+        
+        if embed_images and save_to_folder:
+            feedback.reportError('"Save text and images to folder" option has priority on "Embed images in text document" option\n')
+            embed_images = False
 
         template_path,template_ext = os.path.splitext(template)
 
@@ -85,7 +96,7 @@ class HypertextGeneratorAlgorithm(QgsProcessingAlgorithm):
 
         iface = self.provider().iface
         engine = hypertext_renderer(iface, vector_layer, feature_limit)
-        output_file, result = engine.render(template, target, embed_images)
+        output_file, result = engine.render(template, target, embed_images,save_to_folder)
 
         return {
             "OUTPUT": output_file,
