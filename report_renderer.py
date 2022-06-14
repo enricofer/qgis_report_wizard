@@ -224,25 +224,24 @@ class abstact_report_engine:
         if level == Qgis.Critical:
             raise Exception(msg)
 
-    def canvas_image(self,box=None,width=150,height=150,theme=None):
-        if isinstance(box, QgsRectangle):
-            bb = box
-        elif isinstance(box, QgsGeometry):
-            bb = box.boundingBox()
+    def cleanBoundingBox(self,bb):
+        if isinstance(bb, QgsRectangle):
+            return bb
+        elif isinstance(bb, QgsGeometry):
+            return bb.boundingBox()
+        elif isinstance(bb, list):
+            return QgsRectangle(*bb)
         else:
-            bb = self.iface.mapCanvas().extent()
-        img = self.exporter.image_shot(bb,width,height,theme)
+            return self.iface.mapCanvas().extent()
+        
+
+    def canvas_image(self,box=None,width=150,height=150,theme=None):
+        img = self.exporter.image_shot(self.cleanBoundingBox(box),width,height,theme)
         return img
 
 
     def canvas_base64_image(self,box=None,xsize=150,ysize=150,theme=None):
-        if isinstance(box, QgsRectangle):
-            bb = box
-        elif isinstance(box, QgsGeometry):
-            bb = box.boundingBox()
-        else:
-            bb = self.iface.mapCanvas().extent()
-        base64_img = self.exporter.base64_shot(bb,xsize,ysize,theme)
+        base64_img = self.exporter.base64_shot(self.cleanBoundingBox(box),xsize,ysize,theme)
         #print (str(base64_img))
         return base64_img  
 

@@ -67,10 +67,12 @@ def layout_export(value,image_metadata,img_size,as_is=None):
     res = exporter.renderPageToImage(0, QSize(img_size["width"] ,img_size["height"]), img_size["dpi"])
     return res
 
-
 class hypertext_renderer(abstact_report_engine):
 
-    def export_canvas_image(self,box,width,height,theme,img_path,around_border):
+    def export_canvas_image(self,bb,width,height,theme,img_path,around_border):
+        
+        box = self.self.cleanBoundingBox(bb)
+
         if around_border:
             if width >= height:
                 dim = box.xMaximum() - box.xMinimum()
