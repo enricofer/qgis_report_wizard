@@ -6,11 +6,12 @@
 name=QGIS Report wizard
 qgisMinimumVersion=3.16
 description=QGIS templating engine for odt and hypertext documents 
-version=1.0.1
+version=1.1.0
 author=Enrico Ferreguti
 email=enricofer@gmail.com
 
-about=The plugin makes use of python templating libraries (jinja2, secretary) for creating reports from data (variables, layers, features, layouts and other global settings) within the current QGIS project in ODT format or other text/hypertext format. More info on repository home page: https://github.com/enricofer/qgis_report_wizard
+about=A plugin for odt and plain text reports generation. 
+  The plugin makes use of python templating libraries (jinja2, secretary) for creating reports from data (variables, layers, features, layouts and other global settings) within the current QGIS project in ODT format or other text/hypertext format. More info on repository home page: https://github.com/enricofer/qgis_report_wizard
 
 tracker=https://github.com/enricofer/qgis_report_wizard/issues
 repository=https://github.com/enricofer/qgis_report_wizard
@@ -20,7 +21,11 @@ repository=https://github.com/enricofer/qgis_report_wizard
 
 hasProcessingProvider=yes
 # Uncomment the following line and add your changelog:
-# changelog=1.0.1 Main icon issue fix
+# changelog=1.0.1 
+  Main icon issue fix
+  1.1.0
+  fix for image extent as list exception
+  export sparse files to directory new feature
 
 # Tags are comma separated with spaces allowed
 tags=report, markdown, html, odt, jinja2, secretary, documents
